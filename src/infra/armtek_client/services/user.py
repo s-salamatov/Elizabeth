@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, List, Mapping, Sequence
+from typing import Any, List, Sequence
 
 from pydantic import ValidationError
 

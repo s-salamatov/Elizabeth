@@ -8,6 +8,7 @@ from armtek_client.services.search import SearchService
 class DummyHttpClient:
     def __init__(self, responses):
         self.responses = responses
+        self.last_payload = None
 
     def post(self, path, data=None):
         result = self.responses.get(("post", path))

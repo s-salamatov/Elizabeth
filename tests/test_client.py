@@ -1,7 +1,3 @@
-from datetime import datetime
-
-import pytest
-
 from armtek_client.client import ArmtekClient
 from armtek_client.config import ArmtekConfig
 from armtek_client.models import Buyer, ClientStructure, DeliveryAddress, PickupPoint
@@ -13,6 +9,7 @@ class DummyUserService:
         self.calls = 0
 
     def get_client_structure(self, vkorg: str) -> ClientStructure:
+        del vkorg
         self.calls += 1
         return self.structure
 

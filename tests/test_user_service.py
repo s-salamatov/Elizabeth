@@ -1,7 +1,7 @@
 import pytest
 
 from armtek_client.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
-from armtek_client.models import Buyer, ClientStructure, Contract, DeliveryAddress, PickupPoint, Vkorg
+from armtek_client.models import Buyer, Contract, DeliveryAddress, PickupPoint, Vkorg
 from armtek_client.services.user import UserService
 
 
@@ -10,12 +10,14 @@ class DummyHttpClient:
         self.responses = responses
 
     def get(self, path, params=None):
+        del params
         result = self.responses.get(("get", path))
         if isinstance(result, Exception):
             raise result
         return result
 
     def post(self, path, data=None):
+        del data
         result = self.responses.get(("post", path))
         if isinstance(result, Exception):
             raise result

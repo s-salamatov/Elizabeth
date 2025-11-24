@@ -44,7 +44,7 @@ class ArmtekHttpClient:
     def _body_excerpt(self, response: httpx.Response, limit: int = 500) -> str:
         try:
             text = response.text
-        except Exception:
+        except UnicodeDecodeError:
             return ""
         return text[:limit]
 

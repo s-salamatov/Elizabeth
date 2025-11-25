@@ -72,7 +72,7 @@ class SearchService:
                         currency=str(require_value(mapping, ("WAERS",), "WAERS")),
                         delivery_date=mapping.get("DLVDT"),
                         guaranteed_delivery_date=mapping.get("WRNTDT"),
-                        is_analog=require_value(mapping, ("ANALOG",), "ANALOG"),
+                        is_analog=mapping.get("ANALOG"),
                     )
                 )
             except ValidationError as exc:

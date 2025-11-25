@@ -56,6 +56,104 @@ def test_search_success():
     assert result[0].is_analog is False
 
 
+def test_search_with_missing_analog():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": {
+            "ARRAY": [
+                {
+                    "PIN": "123",
+                    "BRAND": "BMW",
+                    "NAME": "Part name",
+                    "ARTID": "A1",
+                    "PARNR": "S1",
+                    "KEYZAK": "K1",
+                    "RVALUE": "10",
+                    "RETDAYS": "5",
+                    "RDPRF": "1",
+                    "MINBM": "2",
+                    "VENSL": "0.95",
+                    "PRICE": "100.5",
+                    "WAERS": "USD",
+                    "DLVDT": "20240101120000",
+                }
+            ]
+        },
+    }
+    service = SearchService(DummyHttpClient({("post", "/api/ws_search/search"): response}))
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert result[0].is_analog is False
+
+
+def test_search_with_inequality_decimal():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": {
+            "ARRAY": [
+                {
+                    "PIN": "123",
+                    "BRAND": "BMW",
+                    "NAME": "Part name",
+                    "ARTID": "A1",
+                    "PARNR": "S1",
+                    "KEYZAK": "K1",
+                    "RVALUE": ">100",
+                    "RETDAYS": "5",
+                    "RDPRF": "1",
+                    "MINBM": "2",
+                    "VENSL": "0.95",
+                    "PRICE": "100.5",
+                    "WAERS": "USD",
+                    "DLVDT": "20240101120000",
+                    "ANALOG": "0",
+                }
+            ]
+        },
+    }
+    service = SearchService(DummyHttpClient({("post", "/api/ws_search/search"): response}))
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert result[0].quantity_available == 100
+
+
+def test_search_with_grouping_separators():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": {
+            "ARRAY": [
+                {
+                    "PIN": "123",
+                    "BRAND": "BMW",
+                    "NAME": "Part name",
+                    "ARTID": "A1",
+                    "PARNR": "S1",
+                    "KEYZAK": "K1",
+                    "RVALUE": ">50,000",
+                    "RETDAYS": "5",
+                    "RDPRF": "1",
+                    "MINBM": "2",
+                    "VENSL": "0.95",
+                    "PRICE": "100.5",
+                    "WAERS": "USD",
+                    "DLVDT": "20240101120000",
+                    "ANALOG": "0",
+                }
+            ]
+        },
+    }
+    service = SearchService(DummyHttpClient({("post", "/api/ws_search/search"): response}))
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert result[0].quantity_available == 50000
+
+
 def test_search_status_error():
     response = {"STATUS": 500, "MESSAGES": ["fail"], "RESP": {}}
     service = SearchService(DummyHttpClient({("post", "/api/ws_search/search"): response}))

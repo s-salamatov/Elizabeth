@@ -39,6 +39,19 @@ def test_get_vkorg_list_success():
     assert isinstance(result[0], Vkorg)
 
 
+def test_get_vkorg_list_resp_as_list():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": [{"VKORG": "2300", "PROGRAM_NAME": "GP"}, {"VKORG": "2400"}],
+    }
+    service = UserService(DummyHttpClient({("get", "/api/ws_user/getUserVkorgList"): response}))
+
+    result = service.get_vkorg_list()
+
+    assert [vk.vkorg for vk in result] == ["2300", "2400"]
+
+
 def test_get_vkorg_list_status_error():
     response = {"STATUS": 500, "MESSAGES": ["fail"], "RESP": {}}
     service = UserService(DummyHttpClient({("get", "/api/ws_user/getUserVkorgList"): response}))

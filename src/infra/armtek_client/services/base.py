@@ -22,7 +22,9 @@ def unwrap_resp(raw: Any) -> Mapping[str, Any]:
     if "RESP" not in raw:
         raise ArmtekResponseFormatError("Missing RESP section")
     resp = raw["RESP"]
-    if not isinstance(resp, Mapping):
+    if isinstance(resp, list):
+        resp = {"ARRAY": resp}
+    elif not isinstance(resp, Mapping):
         raise ArmtekResponseFormatError("RESP section must be a mapping")
     return resp
 

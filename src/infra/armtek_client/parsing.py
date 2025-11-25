@@ -62,7 +62,12 @@ def parse_datetime_value(value: Any) -> datetime | None:
 
 
 def parse_decimal_value(value: Any) -> Decimal:
+    text = str(value).strip()
+    if text and text[0] in {">", "<"}:
+        text = text[1:].strip()
+    # Remove grouping separators
+    text = text.replace(" ", "").replace(",", "")
     try:
-        return Decimal(str(value))
+        return Decimal(text)
     except Exception as exc:
         raise ArmtekResponseFormatError(f"Invalid decimal value: {value}") from exc

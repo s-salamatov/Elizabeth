@@ -142,7 +142,7 @@ def register_routes(app: Flask) -> None:
         except ArmtekError as exc:
             logger.exception("Armtek search failed: %s", exc)
             return jsonify({"error": "Не удалось выполнить запрос к Armtek"}), 500
-        except Exception as exc:  # pragma: no cover - unexpected path
+        except Exception as exc:  # pragma: no cover - unexpected path # pylint: disable=broad-exception-caught
             logger.exception("Unexpected error during search: %s", exc)
             return jsonify({"error": "Внутренняя ошибка сервера"}), 500
 

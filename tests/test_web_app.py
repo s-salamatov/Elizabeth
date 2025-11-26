@@ -14,7 +14,7 @@ class DummyArmtekService:
         self.error = error
         self.calls = []
 
-    def get_main_search_item(self, *, pin: str, brand: str | None = None, **kwargs):
+    def get_main_search_item(self, *, pin: str, brand: str | None = None):
         self.calls.append({"pin": pin, "brand": brand})
         if self.error:
             raise self.error

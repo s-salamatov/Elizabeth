@@ -4,6 +4,8 @@ from typing import Dict, List
 
 from elizabeth.domain.armtek_models import ClientStructure, SearchItem, Vkorg
 
+# pylint: disable=duplicate-code
+
 from .config import ArmtekConfig
 from .http import ArmtekHttpClient
 from .services.search import SearchService

@@ -1,5 +1,7 @@
 """Service layer for selecting main Armtek search results."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 from typing import Iterable, Optional, Protocol

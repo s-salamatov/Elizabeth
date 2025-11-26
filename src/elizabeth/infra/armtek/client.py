@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from elizabeth.domain.armtek_models import ClientStructure, SearchItem, Vkorg
+
 from .config import ArmtekConfig
 from .http import ArmtekHttpClient
-from .models import ClientStructure, SearchItem, Vkorg
 from .services.search import SearchService
 from .services.user import UserService
 

@@ -4,9 +4,9 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .parsing import parse_bool_flag, parse_datetime_value, parse_decimal_value
+from elizabeth.infra.armtek.parsing import parse_bool_flag, parse_datetime_value, parse_decimal_value
 
 
 class Vkorg(BaseModel):
@@ -94,39 +94,55 @@ class ClientStructure(BaseModel):
 class SearchItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    pin: str
-    brand: str
-    name: str
     artid: str
-    partner_store_code: str
-    store_code: str
-    quantity_available: Decimal
-    return_days: int
-    multiplicity: Decimal
-    min_quantity: Decimal
-    supply_probability: Decimal
-    price: Decimal
-    currency: str
-    delivery_date: Optional[datetime] = None
-    guaranteed_delivery_date: Optional[datetime] = None
-    is_analog: bool
+    pin: str
+    brand: str | None = None
+    name: str | None = None
+
+    store_code: str | None = None
+    partner_store_code: str | None = None
+
+    price: Decimal | None = None
+    currency: str | None = None
+    quantity_available: Decimal | None = None
+    delivery_date: datetime | None = None
+    guaranteed_delivery_date: datetime | None = None
+
+    is_analog: bool | None = None
+
+    # Additional fields preserved from the previous implementation
+    return_days: int | None = None
+    multiplicity: Decimal | None = None
+    min_quantity: Decimal | None = None
+    supply_probability: Decimal | None = None
 
     @field_validator("is_analog", mode="before")
     @classmethod
     def _bool_analog(cls, value: object) -> bool:
         return parse_bool_flag(value)
 
-    @field_validator("quantity_available", "multiplicity", "min_quantity", "supply_probability", "price", mode="before")
+    @field_validator(
+        "quantity_available",
+        "multiplicity",
+        "min_quantity",
+        "supply_probability",
+        "price",
+        mode="before",
+    )
     @classmethod
-    def _decimal_fields(cls, value: object) -> Decimal:
+    def _decimal_fields(cls, value: object) -> Decimal | None:
+        if value is None or value == "":
+            return None
         return parse_decimal_value(value)
 
     @field_validator("return_days", mode="before")
     @classmethod
-    def _return_days_int(cls, value: object) -> int:
+    def _return_days_int(cls, value: object) -> int | None:
+        if value is None or value == "":
+            return None
         return int(value)
 
     @field_validator("delivery_date", "guaranteed_delivery_date", mode="before")
     @classmethod
-    def _dates(cls, value: object) -> Optional[datetime]:
+    def _dates(cls, value: object) -> datetime | None:
         return parse_datetime_value(value)

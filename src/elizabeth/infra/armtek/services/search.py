@@ -4,9 +4,10 @@ from typing import Any, Dict, List
 
 from pydantic import ValidationError
 
+from elizabeth.domain.armtek_models import SearchItem
+
 from ..exceptions import ArmtekResponseFormatError
 from ..http import ArmtekHttpClient
-from ..models import SearchItem
 from ..parsing import ensure_mapping, require_value
 from .base import extract_array, unwrap_resp
 

@@ -1,6 +1,6 @@
-from armtek_client.client import ArmtekClient
-from armtek_client.config import ArmtekConfig
-from armtek_client.models import Buyer, ClientStructure, DeliveryAddress, PickupPoint
+from elizabeth.domain.armtek_models import Buyer, ClientStructure, DeliveryAddress, PickupPoint
+from elizabeth.infra.armtek.client import ArmtekClient
+from elizabeth.infra.armtek.config import ArmtekConfig
 
 
 class DummyUserService:

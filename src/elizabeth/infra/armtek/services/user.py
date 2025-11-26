@@ -5,10 +5,18 @@ from typing import Any, List, Sequence
 
 from pydantic import ValidationError
 
+from elizabeth.domain.armtek_models import (
+    Buyer,
+    ClientStructure,
+    Contract,
+    DeliveryAddress,
+    PickupPoint,
+    Vkorg,
+)
+
 from ..exceptions import ArmtekResponseFormatError
 from ..http import ArmtekHttpClient
-from ..models import Buyer, ClientStructure, Contract, DeliveryAddress, PickupPoint, Vkorg
-from ..parsing import ensure_mapping, ensure_sequence, first_value, parse_datetime_value, parse_bool_flag, require_value
+from ..parsing import ensure_mapping, ensure_sequence, first_value, parse_bool_flag, parse_datetime_value, require_value
 from .base import extract_array, unwrap_resp
 
 logger = logging.getLogger(__name__)

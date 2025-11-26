@@ -1,8 +1,8 @@
 import pytest
 
-from armtek_client.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
-from armtek_client.models import SearchItem
-from armtek_client.services.search import SearchService
+from elizabeth.domain.armtek_models import SearchItem
+from elizabeth.infra.armtek.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
+from elizabeth.infra.armtek.services.search import SearchService
 
 
 class DummyHttpClient:

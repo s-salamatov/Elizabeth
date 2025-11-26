@@ -1,8 +1,8 @@
 import pytest
 
-from armtek_client.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
-from armtek_client.models import Buyer, Contract, DeliveryAddress, PickupPoint, Vkorg
-from armtek_client.services.user import UserService
+from elizabeth.domain.armtek_models import Buyer, Contract, DeliveryAddress, PickupPoint, Vkorg
+from elizabeth.infra.armtek.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
+from elizabeth.infra.armtek.services.user import UserService
 
 
 class DummyHttpClient:

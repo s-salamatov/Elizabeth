@@ -34,17 +34,18 @@ class ArmtekService:
         incoterms: int | None = None,
         vbeln: str | None = None,
     ) -> list[SearchItem]:
-        return self._client.search(
-            vkorg=vkorg,
-            kunnr_rg=kunnr_rg,
-            pin=pin,
-            brand=brand,
-            query_type=query_type,
-            program=program,
-            kunnr_za=kunnr_za,
-            incoterms=incoterms,
-            vbeln=vbeln,
-        )
+        params = {
+            "vkorg": vkorg,
+            "kunnr_rg": kunnr_rg,
+            "pin": pin,
+            "brand": brand,
+            "query_type": query_type,
+            "program": program,
+            "kunnr_za": kunnr_za,
+            "incoterms": incoterms,
+            "vbeln": vbeln,
+        }
+        return self._client.search(**params)
 
     def close(self) -> None:
         self._client.close()

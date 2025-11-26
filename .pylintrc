@@ -1,8 +1,14 @@
 [MASTER]
-ignore-patterns=venv,.venv
+init-hook='import sys; sys.path.insert(0, "src")'
 
 [MESSAGES CONTROL]
-disable=C0114,C0115,C0116,R0903,R0913,R0914,W0212
-
-[FORMAT]
-max-line-length=120
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    too-few-public-methods,
+    too-many-arguments,
+    too-many-locals,
+    line-too-long,
+    protected-access,
+    undefined-all-variable

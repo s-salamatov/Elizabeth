@@ -1,5 +1,6 @@
 import pytest
 
+# pylint: disable=duplicate-code  # shared search payload across client and service
 from elizabeth.domain.armtek_models import SearchItem
 from elizabeth.infra.armtek.exceptions import ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
 from elizabeth.infra.armtek.services.search import SearchService

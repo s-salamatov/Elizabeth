@@ -16,3 +16,6 @@ venv/
 .ruff_cache/
 .idea/
 .vscode/
+
+# Environment files
+.env

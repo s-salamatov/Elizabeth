@@ -28,7 +28,7 @@ jobs:
 
       - name: Lint with pylint
         run: |
-          pylint src/infra/armtek_client tests
+          pylint src/elizabeth tests
 
       - name: Run tests
         run: |

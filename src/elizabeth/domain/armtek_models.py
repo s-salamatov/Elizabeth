@@ -146,3 +146,9 @@ class SearchItem(BaseModel):
     @classmethod
     def _dates(cls, value: object) -> datetime | None:
         return parse_datetime_value(value)
+
+
+class ProductHtmlDetails(BaseModel):
+    artid: str
+    image_url: str | None = None
+    # в будущем могут добавляться другие поля (описание, атрибуты и т.п.)

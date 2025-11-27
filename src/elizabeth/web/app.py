@@ -7,14 +7,21 @@ import logging
 import os
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 from flask import Flask, current_app, jsonify, render_template, request
 
-from elizabeth.domain.armtek_models import SearchItem
+from elizabeth.domain.armtek_models import ProductHtmlDetails, SearchItem
 from elizabeth.infra.armtek.client import ArmtekClient
 from elizabeth.infra.armtek.config import ArmtekConfig
-from elizabeth.infra.armtek.exceptions import ArmtekError
+from elizabeth.infra.armtek.exceptions import ArmtekError, ArmtekInteractiveLoginRequired
+from elizabeth.infra.armtek.html_session import ArmtekHtmlSession, ArmtekSessionStore
+from elizabeth.infra.armtek.interactive_login import (
+    ArmtekInteractiveLoginConfig,
+    ArmtekInteractiveLoginFlow,
+)
+from elizabeth.parsers.armtek_parser import ArmtekHtmlParser
 from elizabeth.services.armtek_service import ArmtekService
 
 logger = logging.getLogger(__name__)
@@ -107,11 +114,38 @@ def _get_armtek_service() -> ArmtekService:
     return service
 
 
-def create_app(armtek_service: ArmtekService | None = None) -> Flask:
+def _get_armtek_html_parser() -> ArmtekHtmlParser:
+    parser = current_app.config.get("armtek_html_parser")
+    if parser is None:
+        raise RuntimeError("Armtek HTML parser is not configured")
+    return parser
+
+
+def _get_interactive_login_flow() -> ArmtekInteractiveLoginFlow:
+    flow = current_app.config.get("armtek_login_flow")
+    if flow is None:
+        raise RuntimeError("Armtek interactive login flow is not configured")
+    return flow
+
+
+def create_app(
+    armtek_service: ArmtekService | None = None,
+    html_parser: ArmtekHtmlParser | None = None,
+    login_flow: ArmtekInteractiveLoginFlow | None = None,
+) -> Flask:
     app = Flask(__name__, template_folder="templates", static_folder="static")
 
     service = armtek_service or _build_default_service()
     app.config["armtek_service"] = service
+
+    session_store = ArmtekSessionStore(Path("data/armtek_session.json"))
+    html_session = ArmtekHtmlSession(store=session_store, base_url="https://etp.armtek.ru")
+    login_config = ArmtekInteractiveLoginConfig()
+    flow = login_flow or ArmtekInteractiveLoginFlow(config=login_config, store=session_store)
+    parser = html_parser or ArmtekHtmlParser(session=html_session, login_flow=flow)
+
+    app.config["armtek_html_parser"] = parser
+    app.config["armtek_login_flow"] = flow
 
     atexit.register(service.close)
 
@@ -150,6 +184,48 @@ def register_routes(app: Flask) -> None:
             return jsonify({"error": "Товар не найден"}), 404
 
         return jsonify(serialize_search_item(item)), 200
+
+    @app.route("/api/product/details", methods=["POST"])
+    def api_product_details():
+        payload = request.get_json(silent=True) or {}
+        artid = str(payload.get("artid", "")).strip()
+        if not artid:
+            return jsonify({"status": "error", "message": "Поле artid обязательно"}), 400
+
+        parser = _get_armtek_html_parser()
+        try:
+            details: ProductHtmlDetails = parser.get_product_details(artid)
+        except (ArmtekInteractiveLoginRequired, FileNotFoundError, ValueError):
+            return jsonify(
+                {
+                    "status": "interactive_login_required",
+                    "message": "Требуется авторизация или прохождение капчи на сайте Armtek",
+                }
+            ), 200
+        except Exception as exc:  # pragma: no cover - unexpected path # pylint: disable=broad-exception-caught
+            logger.exception("Failed to fetch product details: %s", exc)
+            return jsonify({"status": "error", "message": "Не удалось получить данные товара"}), 500
+
+        return jsonify({"status": "ok", "artid": details.artid, "image_url": details.image_url}), 200
+
+    @app.route("/api/product/interactive-login", methods=["POST"])
+    def api_product_interactive_login():
+        payload = request.get_json(silent=True) or {}
+        artid_value = payload.get("artid")
+        artid = str(artid_value).strip() if artid_value else None
+        flow = _get_interactive_login_flow()
+        try:
+            flow.run(artid=artid or None)
+        except Exception as exc:  # pragma: no cover - unexpected path # pylint: disable=broad-exception-caught
+            logger.exception("Interactive login failed: %s", exc)
+            return jsonify({"status": "error", "message": "Не удалось выполнить интерактивный логин"}), 500
+
+        return jsonify(
+            {
+                "status": "ok",
+                "message": "Интерактивная авторизация выполнена. Повторите запрос получения данных товара.",
+            }
+        ), 200
 
 
 # Compatibility entrypoint for `flask run`

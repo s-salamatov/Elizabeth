@@ -3,8 +3,8 @@ from decimal import Decimal
 
 import pytest
 
-from elizabeth.domain.armtek_models import SearchItem
-from elizabeth.infra.armtek.exceptions import ArmtekError
+from elizabeth.domain.armtek_models import ProductHtmlDetails, SearchItem
+from elizabeth.infra.armtek.exceptions import ArmtekError, ArmtekInteractiveLoginRequired
 from elizabeth.web.app import create_app, parse_query
 
 
@@ -22,6 +22,32 @@ class DummyArmtekService:
 
     def close(self) -> None:
         pass
+
+
+class DummyHtmlParser:
+    def __init__(self, details: ProductHtmlDetails | None = None, error: Exception | None = None):
+        self.details = details
+        self.error = error
+        self.calls: list[str] = []
+
+    def get_product_details(self, artid: str) -> ProductHtmlDetails:
+        self.calls.append(artid)
+        if self.error:
+            raise self.error
+        if self.details is None:
+            raise RuntimeError("No details provided")
+        return self.details
+
+
+class DummyLoginFlow:
+    def __init__(self, error: Exception | None = None):
+        self.error = error
+        self.calls: list[str | None] = []
+
+    def run(self, artid: str | None = None) -> None:
+        self.calls.append(artid)
+        if self.error:
+            raise self.error
 
 
 @pytest.mark.parametrize(
@@ -89,3 +115,95 @@ def test_api_search_handles_armtek_error():
 
     assert response.status_code == 500
     assert response.get_json()["error"]
+
+
+def test_api_product_details_success():
+    service = DummyArmtekService(item=None)
+    details = ProductHtmlDetails(artid="123", image_url="https://example.com/image.png")
+    html_parser = DummyHtmlParser(details=details)
+    login_flow = DummyLoginFlow()
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/details", json={"artid": "123"})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "ok"
+    assert data["image_url"] == "https://example.com/image.png"
+    assert html_parser.calls == ["123"]
+
+
+def test_api_product_details_interactive_required():
+    service = DummyArmtekService(item=None)
+    html_parser = DummyHtmlParser(error=ArmtekInteractiveLoginRequired("login"))
+    login_flow = DummyLoginFlow()
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/details", json={"artid": "555"})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "interactive_login_required"
+    assert html_parser.calls == ["555"]
+
+
+def test_api_product_details_interactive_on_missing_state():
+    service = DummyArmtekService(item=None)
+    html_parser = DummyHtmlParser(error=FileNotFoundError("missing"))
+    login_flow = DummyLoginFlow()
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/details", json={"artid": "555"})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "interactive_login_required"
+    assert html_parser.calls == ["555"]
+
+
+def test_api_product_details_error_path():
+    service = DummyArmtekService(item=None)
+    html_parser = DummyHtmlParser(error=RuntimeError("boom"))
+    login_flow = DummyLoginFlow()
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/details", json={"artid": "777"})
+
+    assert response.status_code == 500
+    data = response.get_json()
+    assert data["status"] == "error"
+    assert html_parser.calls == ["777"]
+
+
+def test_api_interactive_login_endpoint_success():
+    service = DummyArmtekService(item=None)
+    html_parser = DummyHtmlParser(details=ProductHtmlDetails(artid="1", image_url=None))
+    login_flow = DummyLoginFlow()
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/interactive-login", json={"artid": "123"})
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["status"] == "ok"
+    assert login_flow.calls == ["123"]
+
+
+def test_api_interactive_login_endpoint_failure():
+    service = DummyArmtekService(item=None)
+    html_parser = DummyHtmlParser(details=ProductHtmlDetails(artid="1", image_url=None))
+    login_flow = DummyLoginFlow(error=RuntimeError("fail"))
+    app = create_app(armtek_service=service, html_parser=html_parser, login_flow=login_flow)
+    client = app.test_client()
+
+    response = client.post("/api/product/interactive-login", json={"artid": "123"})
+
+    assert response.status_code == 500
+    data = response.get_json()
+    assert data["status"] == "error"
+    assert login_flow.calls == ["123"]

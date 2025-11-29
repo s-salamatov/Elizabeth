@@ -144,7 +144,12 @@ class SearchItem(BaseModel):
     def _return_days_int(cls, value: object) -> int | None:
         if value is None or value == "":
             return None
-        return int(value)
+        if isinstance(value, (int, float, str)):
+            try:
+                return int(value)
+            except (TypeError, ValueError):
+                return None
+        return None
 
     @field_validator("delivery_date", "guaranteed_delivery_date", mode="before")
     @classmethod

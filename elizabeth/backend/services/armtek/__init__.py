@@ -3,7 +3,6 @@ from elizabeth.backend.services.armtek.client import ArmtekClient
 from elizabeth.backend.services.armtek.exceptions import (
     ArmtekError,
     ArmtekHttpError,
-    ArmtekInteractiveLoginRequired,
     ArmtekResponseFormatError,
     ArmtekStatusError,
 )
@@ -15,7 +14,6 @@ __all__ = [
     "ArmtekClient",
     "ArmtekError",
     "ArmtekHttpError",
-    "ArmtekInteractiveLoginRequired",
     "ArmtekResponseFormatError",
     "ArmtekStatusError",
     "ArmtekProductParser",

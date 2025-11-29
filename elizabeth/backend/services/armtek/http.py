@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from types import TracebackType
+from typing import Any, Dict, Optional, Type, cast
 
 import httpx
 
@@ -40,7 +41,7 @@ class ArmtekHttpClient:
 
     def _parse_json(self, response: httpx.Response) -> Dict[str, Any]:
         try:
-            return response.json()
+            return cast(Dict[str, Any], response.json())
         except ValueError as exc:  # json.JSONDecodeError is a subclass
             raise ArmtekResponseFormatError("Response is not valid JSON") from exc
 
@@ -93,5 +94,10 @@ class ArmtekHttpClient:
     def __enter__(self) -> "ArmtekHttpClient":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
         self.close()

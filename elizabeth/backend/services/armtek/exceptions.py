@@ -18,10 +18,3 @@ class ArmtekStatusError(ArmtekError):
 
 class ArmtekResponseFormatError(ArmtekError):
     """Raised when response structure is unexpected."""
-
-
-class ArmtekInteractiveLoginRequired(ArmtekError):
-    """
-    Бросается, когда после попыток интерактивного логина страница всё ещё
-    требует входа или капчу.
-    """

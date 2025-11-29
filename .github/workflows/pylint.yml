@@ -11,7 +11,7 @@ jobs:
       matrix:
         python-version: ["3.14"]
     env:
-      PYTHONPATH: src/infra
+      PYTHONPATH: .
 
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +26,33 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt pylint
 
+      - name: Check formatting with black
+        run: |
+          black . --check
+
+      - name: Check imports with isort
+        run: |
+          isort . --check-only
+
+      - name: Lint with flake8
+        run: |
+          flake8 .
+
+      - name: Type check with mypy
+        run: |
+          mypy elizabeth
+
+      - name: Run lint script
+        run: |
+          scripts/lint.sh
+
       - name: Lint with pylint
         run: |
-          pylint src/elizabeth tests
+          pylint elizabeth tests
+
+      - name: Check for inline suppressions
+        run: |
+          grep -R "noqa\|disable\|type: ignore" -n elizabeth || true
 
       - name: Run tests
         run: |

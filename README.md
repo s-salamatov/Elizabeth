@@ -64,6 +64,7 @@ To skip analogs and work with HTML parsers, use `ArmtekService` (`elizabeth.back
 ## Testing
 - Fast suite: `pytest`.
 - Integration (manual, networked): `pytest -m integration` with `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, and optionally `ARMTEK_BASE_URL`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`.
+- Linting/typing: `scripts/lint.sh` (black, isort, flake8, mypy).
 
 ## Browser Helper
 Install `elizabeth/extensions/armtek_extension.user.js` into Tampermonkey/Greasemonkey; it reads tokens from the Armtek URL and posts characteristics back.

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from flask import Blueprint, current_app, jsonify, request
+from typing import cast
+
+from flask import Blueprint, Response, current_app, jsonify, request
+from flask.typing import ResponseReturnValue
 
 from elizabeth.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
@@ -11,13 +14,16 @@ characteristics_bp = Blueprint("characteristics_api", __name__)
 
 
 def _get_characteristics_repo() -> ArmtekCharacteristicsRepository:
-    repo = current_app.config.get("characteristics_repo")
+    repo = cast(
+        ArmtekCharacteristicsRepository | None,
+        current_app.config.get("characteristics_repo"),
+    )
     if repo is None:
         raise RuntimeError("Characteristics repository is not configured")
     return repo
 
 
-def _with_cors_headers(response):
+def _with_cors_headers(response: Response) -> Response:
     origin = current_app.config.get("EXTENSION_ALLOWED_ORIGIN", "*")
     response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Methods"] = "GET,POST,OPTIONS"
@@ -26,18 +32,18 @@ def _with_cors_headers(response):
 
 
 @characteristics_bp.after_request
-def add_cors_headers(response):  # type: ignore[override]
+def add_cors_headers(response: Response) -> Response:
     return _with_cors_headers(response)
 
 
 @characteristics_bp.route("/api/armtek/characteristics", methods=["OPTIONS"])
-def api_characteristics_options():
+def api_characteristics_options() -> ResponseReturnValue:
     response = current_app.make_default_options_response()
     return _with_cors_headers(response)
 
 
 @characteristics_bp.route("/api/armtek/characteristics", methods=["POST"])
-def api_characteristics_callback():
+def api_characteristics_callback() -> ResponseReturnValue:
     payload = request.get_json(silent=True) or {}
     try:
         token = parse_optional_str(payload.get("token")) or ""
@@ -80,7 +86,7 @@ def api_characteristics_callback():
 
 
 @characteristics_bp.route("/api/armtek/characteristics", methods=["GET"])
-def api_characteristics_get():
+def api_characteristics_get() -> ResponseReturnValue:
     token = str(request.args.get("token", "")).strip()
     if not token:
         return _with_cors_headers(jsonify({"status": "not_found"})), 200

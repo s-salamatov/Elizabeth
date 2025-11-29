@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 from flask import Blueprint, current_app, jsonify, request
+from flask.typing import ResponseReturnValue
 
 from elizabeth.backend.models.search_result import SearchItem
 from elizabeth.backend.repositories.characteristics_repository import (
@@ -25,15 +26,7 @@ search_bp = Blueprint("search_api", __name__)
 
 
 def parse_query(query: str) -> tuple[str, str | None]:
-    """
-    Parse user input into article and optional brand.
-
-    Examples:
-    - "332101_KYB" -> ("332101", "KYB")
-    - "332101 KYB" -> ("332101", "KYB")
-    - "332101" -> ("332101", None)
-    """
-
+    """Parse user input into article and optional brand."""
     cleaned = query.strip()
     if not cleaned:
         raise ValueError("Введите артикул для поиска")
@@ -75,21 +68,26 @@ def serialize_search_item(item: SearchItem) -> dict[str, Any]:
 
 
 def _get_armtek_service() -> ArmtekService:
-    service = current_app.config.get("armtek_service")
+    service = cast(ArmtekService | None, current_app.config.get("armtek_service"))
     if service is None:
         raise RuntimeError("Armtek service is not configured")
     return service
 
 
 def _get_search_context() -> ArmtekSearchContext:
-    context = current_app.config.get("armtek_search_context")
+    context = cast(
+        ArmtekSearchContext | None, current_app.config.get("armtek_search_context")
+    )
     if context is None:
         raise RuntimeError("Armtek search context is not configured")
     return context
 
 
 def _get_characteristics_repo() -> ArmtekCharacteristicsRepository:
-    repo = current_app.config.get("characteristics_repo")
+    repo = cast(
+        ArmtekCharacteristicsRepository | None,
+        current_app.config.get("characteristics_repo"),
+    )
     if repo is None:
         raise RuntimeError("Characteristics repository is not configured")
     return repo
@@ -114,7 +112,7 @@ def _serialize_with_tokens(
 
 @search_bp.route("/api/search", methods=["POST"])
 @search_bp.route("/api/armtek/search", methods=["POST"])
-def api_search():
+def api_search() -> ResponseReturnValue:
     payload = request.get_json(silent=True) or {}
     if "query" not in payload:
         return jsonify({"error": "Поле query обязательно"}), 400
@@ -133,11 +131,6 @@ def api_search():
     except ArmtekError as exc:
         logger.exception("Armtek search failed: %s", exc)
         return jsonify({"error": "Не удалось выполнить запрос к Armtek"}), 500
-    except (
-        Exception
-    ) as exc:  # pragma: no cover  # pylint: disable=broad-exception-caught
-        logger.exception("Unexpected error during search: %s", exc)
-        return jsonify({"error": "Внутренняя ошибка сервера"}), 500
 
     if item is None:
         return jsonify({"error": "Товар не найден"}), 404

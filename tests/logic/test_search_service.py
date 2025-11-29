@@ -1,6 +1,5 @@
 import pytest
 
-# pylint: disable=duplicate-code  # shared search payload across client and service
 from elizabeth.backend.models.search_result import SearchItem
 from elizabeth.backend.services.armtek.exceptions import (
     ArmtekHttpError,

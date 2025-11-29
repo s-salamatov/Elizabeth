@@ -28,9 +28,7 @@ class ArmtekCharacteristicsRepository:
 
 
 class InMemoryArmtekCharacteristicsRepository(ArmtekCharacteristicsRepository):
-    """
-    Простое in-memory хранилище характеристик.
-    """
+    """Простое in-memory хранилище характеристик."""
 
     def __init__(self) -> None:
         self._store: Dict[str, CharacteristicsRecord] = {}

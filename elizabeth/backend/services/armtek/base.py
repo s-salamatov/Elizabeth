@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping, Sequence, cast
 
 from elizabeth.backend.services.armtek.exceptions import (
     ArmtekResponseFormatError,
@@ -31,7 +31,7 @@ def unwrap_resp(raw: Any) -> Mapping[str, Any]:
         resp = {"ARRAY": resp}
     elif not isinstance(resp, Mapping):
         raise ArmtekResponseFormatError("RESP section must be a mapping")
-    return resp
+    return cast(Mapping[str, Any], resp)
 
 
 def extract_array(resp: Mapping[str, Any], name: str) -> list[Any]:

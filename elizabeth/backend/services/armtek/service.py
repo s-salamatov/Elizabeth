@@ -1,10 +1,9 @@
 """Service layer for selecting main Armtek search results."""
 
-# pylint: disable=duplicate-code
-
 from __future__ import annotations
 
-from typing import Iterable, Optional, Protocol
+from types import TracebackType
+from typing import Iterable, Optional, Protocol, Type
 
 from elizabeth.backend.config import ArmtekConfig
 from elizabeth.backend.models.characteristics import ProductHtmlDetails
@@ -15,18 +14,11 @@ from elizabeth.backend.services.tokens import ArmtekSearchContext
 
 class ArmtekProductParser(Protocol):
     def parse_product_by_artid(self, artid: str) -> ProductHtmlDetails:
-        """
-        Parser interface for fetching product details by Armtek ID.
-
-        Implementations are responsible for retrieving and parsing the HTML page
-        for the provided ``artid``.
-        """
+        """Fetch product details by Armtek ID via HTML parsing."""
 
 
 class ArmtekService:
-    """
-    Сервисный слой для работы с поиском товаров через :class:`ArmtekClient`.
-    """
+    """Сервисный слой для работы с поиском товаров через :class:`ArmtekClient`."""
 
     def __init__(
         self,
@@ -40,7 +32,6 @@ class ArmtekService:
         vbeln: str | None = None,
     ) -> None:
         """Инициализация сервиса."""
-
         self._client = client
         self._vkorg = vkorg
         self._kunnr_rg = kunnr_rg
@@ -91,13 +82,7 @@ class ArmtekService:
         incoterms: int | None = None,
         vbeln: str | None = None,
     ) -> list[SearchItem]:
-        """
-        Получить список ``SearchItem`` напрямую из ``ArmtekClient``.
-
-        Аргументы метода переопределяют значения, переданные при инициализации
-        сервиса.
-        """
-
+        """Получить список ``SearchItem`` напрямую из ``ArmtekClient``."""
         return self._client.search(
             vkorg=self._vkorg,
             kunnr_rg=self._kunnr_rg,
@@ -122,7 +107,6 @@ class ArmtekService:
         vbeln: str | None = None,
     ) -> Optional[SearchItem]:
         """Вернуть первый элемент поиска, который не отмечен как аналог."""
-
         items = self.search_items(
             pin=pin,
             brand=brand,
@@ -146,7 +130,6 @@ class ArmtekService:
         vbeln: str | None = None,
     ) -> Optional[str]:
         """Получить ARTID основного товара или ``None``."""
-
         item = self.get_main_search_item(
             pin=pin,
             brand=brand,
@@ -165,13 +148,7 @@ class ArmtekService:
         pin: str,
         brand: str | None = None,
     ) -> Optional[ProductHtmlDetails]:
-        """
-        Получить детали товара через внешний парсер HTML.
-
-        - получаем ARTID через :meth:`get_main_artid`;
-        - если ARTID найден — делегируем парсеру.
-        """
-
+        """Получить детали товара через внешний парсер HTML."""
         artid = self.get_main_artid(pin=pin, brand=brand)
         if artid is None:
             return None
@@ -185,7 +162,6 @@ class ArmtekService:
         self, items: Iterable[SearchItem]
     ) -> Optional[SearchItem]:
         """Вернуть первый элемент, у которого ``is_analog`` не равен ``True``."""
-
         for item in items:
             if item.is_analog is not True:
                 return item
@@ -197,5 +173,10 @@ class ArmtekService:
     def __enter__(self) -> "ArmtekService":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
         self.close()

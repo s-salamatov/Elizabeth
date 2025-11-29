@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from types import TracebackType
+from typing import Dict, List, Optional, Type
 
 from elizabeth.backend.config import ArmtekConfig
 from elizabeth.backend.models.search_result import ClientStructure, SearchItem, Vkorg
@@ -10,10 +11,17 @@ from elizabeth.backend.services.armtek.user import UserService
 
 
 class ArmtekClient:
-    def __init__(self, config: ArmtekConfig):
-        self._http = ArmtekHttpClient(config)
-        self._user_service = UserService(self._http)
-        self._search_service = SearchService(self._http)
+    def __init__(
+        self,
+        config: ArmtekConfig,
+        *,
+        http_client: Optional[ArmtekHttpClient] = None,
+        user_service: Optional[UserService] = None,
+        search_service: Optional[SearchService] = None,
+    ):
+        self._http = http_client or ArmtekHttpClient(config)
+        self._user_service = user_service or UserService(self._http)
+        self._search_service = search_service or SearchService(self._http)
         self._structure_cache: Dict[str, ClientStructure] = {}
 
     def close(self) -> None:
@@ -60,5 +68,10 @@ class ArmtekClient:
     def __enter__(self) -> "ArmtekClient":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
         self.close()

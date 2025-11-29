@@ -1,3 +1,5 @@
+"""Flask application factory and dependency wiring for Elizabeth backend."""
+
 from __future__ import annotations
 
 import atexit
@@ -5,6 +7,7 @@ import os
 from pathlib import Path
 
 from flask import Flask, render_template
+from flask.typing import ResponseReturnValue
 
 from elizabeth.backend.api.characteristics_api import characteristics_bp
 from elizabeth.backend.api.health_api import health_bp
@@ -23,6 +26,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 
 def _build_default_service() -> ArmtekService:
+    """Construct a default ArmtekService from environment variables."""
     config = ArmtekConfig(
         base_url=os.getenv("ARMTEK_BASE_URL", "https://ws.armtek.ru"),
         login=os.getenv("ARMTEK_LOGIN", "demo_login"),
@@ -45,6 +49,7 @@ def _build_default_service() -> ArmtekService:
 def _build_default_search_context(
     service: ArmtekService | None = None,
 ) -> ArmtekSearchContext:
+    """Create a default search context aligned with the configured service."""
     if service is not None:
         return service.search_context
     return ArmtekSearchContext(
@@ -62,6 +67,7 @@ def create_app(
     search_context: ArmtekSearchContext | None = None,
     characteristics_repository: ArmtekCharacteristicsRepository | None = None,
 ) -> Flask:
+    """Create and configure the Flask application."""
     app = Flask(
         __name__,
         template_folder=str(FRONTEND_DIR / "templates"),
@@ -88,11 +94,13 @@ def create_app(
     app.register_blueprint(health_bp)
 
     @app.route("/", methods=["GET"])
-    def index():
+    def index() -> ResponseReturnValue:
+        """Render the main UI page."""
         return render_template("index.html")
 
     return app
 
 
 def create_app_wsgi() -> Flask:
+    """Entrypoint used by `flask run`."""
     return create_app()

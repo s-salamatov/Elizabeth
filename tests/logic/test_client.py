@@ -35,10 +35,9 @@ def make_structure() -> ClientStructure:
 
 def test_get_client_structure_uses_cache():
     dummy_config = ArmtekConfig(base_url="https://example.com", login="l", password="p")
-    client = ArmtekClient(dummy_config)
     structure = make_structure()
     dummy_service = DummyUserService(structure)
-    client._user_service = dummy_service  # type: ignore[attr-defined]
+    client = ArmtekClient(dummy_config, user_service=dummy_service)
 
     first = client.get_client_structure("2000", with_cache=True)
     second = client.get_client_structure("2000", with_cache=True)
@@ -50,10 +49,9 @@ def test_get_client_structure_uses_cache():
 
 def test_get_client_structure_no_cache():
     dummy_config = ArmtekConfig(base_url="https://example.com", login="l", password="p")
-    client = ArmtekClient(dummy_config)
     structure = make_structure()
     dummy_service = DummyUserService(structure)
-    client._user_service = dummy_service  # type: ignore[attr-defined]
+    client = ArmtekClient(dummy_config, user_service=dummy_service)
 
     client.get_client_structure("2000", with_cache=False)
     client.get_client_structure("2000", with_cache=False)

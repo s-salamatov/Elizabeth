@@ -28,13 +28,7 @@ def generate_api_token(
     brand: str | None,
     context: ArmtekSearchContext,
 ) -> str:
-    """
-    Детерминированный токен для запроса к API Armtek.
-
-    Использует параметры запроса (vkorg/kunnr_rg/pin/brand/artid)
-    плюс опциональные поля контекста для устойчивости к коллизиям.
-    """
-
+    """Детерминированный токен для запроса к API Armtek."""
     parts = (
         context.vkorg,
         context.kunnr_rg,
@@ -50,8 +44,5 @@ def generate_api_token(
 
 
 def generate_characteristics_token(*, artid: str) -> str:
-    """
-    Детерминированный токен характеристик для конкретного artid.
-    """
-
+    """Детерминированный токен характеристик для конкретного artid."""
     return _hash_parts("char", (artid,))

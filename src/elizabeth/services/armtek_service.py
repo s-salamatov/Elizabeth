@@ -6,13 +6,14 @@ from __future__ import annotations
 
 from typing import Iterable, Optional, Protocol
 
-from elizabeth.domain.armtek_models import SearchItem
+from elizabeth.domain.armtek_models import ProductHtmlDetails, SearchItem
+from elizabeth.domain.tokens import ArmtekSearchContext
 from elizabeth.infra.armtek.client import ArmtekClient
 from elizabeth.infra.armtek.config import ArmtekConfig
 
 
 class ArmtekProductParser(Protocol):
-    def parse_product_by_artid(self, artid: str) -> "ParsedProductHtml":
+    def parse_product_by_artid(self, artid: str) -> ProductHtmlDetails:
         """
         Parser interface for fetching product details by Armtek ID.
 
@@ -46,6 +47,14 @@ class ArmtekService:
         self._kunnr_za = kunnr_za
         self._incoterms = incoterms
         self._vbeln = vbeln
+        self._search_context = ArmtekSearchContext(
+            vkorg=vkorg,
+            kunnr_rg=kunnr_rg,
+            program=program,
+            kunnr_za=kunnr_za,
+            incoterms=incoterms,
+            vbeln=vbeln,
+        )
 
     @classmethod
     def from_config(
@@ -154,7 +163,7 @@ class ArmtekService:
         *,
         pin: str,
         brand: str | None = None,
-    ) -> Optional["ParsedProductHtml"]:
+    ) -> Optional[ProductHtmlDetails]:
         """
         Получить детали товара через внешний парсер HTML.
 
@@ -166,6 +175,10 @@ class ArmtekService:
         if artid is None:
             return None
         return parser.parse_product_by_artid(artid)
+
+    @property
+    def search_context(self) -> ArmtekSearchContext:
+        return self._search_context
 
     def _choose_first_non_analog(
         self, items: Iterable[SearchItem]

@@ -3,9 +3,21 @@ from elizabeth.infra.armtek import (
     ArmtekConfig,
     ArmtekError,
     ArmtekHttpError,
+    ArmtekInteractiveLoginRequired,
     ArmtekResponseFormatError,
     ArmtekStatusError,
+    SearchService,
+    UserService,
 )
-from elizabeth.infra.armtek import __all__ as _infra_exports
 
-__all__ = list(_infra_exports)
+__all__ = [
+    "ArmtekClient",
+    "ArmtekConfig",
+    "ArmtekError",
+    "ArmtekHttpError",
+    "ArmtekInteractiveLoginRequired",
+    "ArmtekResponseFormatError",
+    "ArmtekStatusError",
+    "SearchService",
+    "UserService",
+]

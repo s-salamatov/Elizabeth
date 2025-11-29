@@ -1,26 +1,12 @@
 from __future__ import annotations
 
-from typing import cast
-
 from flask import Blueprint, Response, current_app, jsonify, request
 from flask.typing import ResponseReturnValue
 
-from elizabeth.backend.repositories.characteristics_repository import (
-    ArmtekCharacteristicsRepository,
-)
+from elizabeth.backend.api.deps import get_characteristics_repo
 from elizabeth.backend.utils.validation import parse_optional_str
 
 characteristics_bp = Blueprint("characteristics_api", __name__)
-
-
-def _get_characteristics_repo() -> ArmtekCharacteristicsRepository:
-    repo = cast(
-        ArmtekCharacteristicsRepository | None,
-        current_app.config.get("characteristics_repo"),
-    )
-    if repo is None:
-        raise RuntimeError("Characteristics repository is not configured")
-    return repo
 
 
 def _with_cors_headers(response: Response) -> Response:
@@ -70,7 +56,7 @@ def api_characteristics_callback() -> ResponseReturnValue:
             400,
         )
 
-    repo = _get_characteristics_repo()
+    repo = get_characteristics_repo()
     repo.save(
         token=token,
         artid=artid,
@@ -91,7 +77,7 @@ def api_characteristics_get() -> ResponseReturnValue:
     if not token:
         return _with_cors_headers(jsonify({"status": "not_found"})), 200
 
-    repo = _get_characteristics_repo()
+    repo = get_characteristics_repo()
     record = repo.get_by_token(token)
     if record is None:
         return _with_cors_headers(jsonify({"status": "not_found"})), 200

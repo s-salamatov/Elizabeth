@@ -2,17 +2,21 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
 
+from elizabeth.backend.api.deps import (
+    get_armtek_service,
+    get_characteristics_repo,
+    get_search_context,
+)
 from elizabeth.backend.models.search_result import SearchItem
 from elizabeth.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
 )
 from elizabeth.backend.services.armtek.exceptions import ArmtekError
-from elizabeth.backend.services.armtek.service import ArmtekService
 from elizabeth.backend.services.tokens import (
     ArmtekSearchContext,
     generate_api_token,
@@ -67,32 +71,6 @@ def serialize_search_item(item: SearchItem) -> dict[str, Any]:
     return {key: _serialize_value(value) for key, value in payload.items()}
 
 
-def _get_armtek_service() -> ArmtekService:
-    service = cast(ArmtekService | None, current_app.config.get("armtek_service"))
-    if service is None:
-        raise RuntimeError("Armtek service is not configured")
-    return service
-
-
-def _get_search_context() -> ArmtekSearchContext:
-    context = cast(
-        ArmtekSearchContext | None, current_app.config.get("armtek_search_context")
-    )
-    if context is None:
-        raise RuntimeError("Armtek search context is not configured")
-    return context
-
-
-def _get_characteristics_repo() -> ArmtekCharacteristicsRepository:
-    repo = cast(
-        ArmtekCharacteristicsRepository | None,
-        current_app.config.get("characteristics_repo"),
-    )
-    if repo is None:
-        raise RuntimeError("Characteristics repository is not configured")
-    return repo
-
-
 def _serialize_with_tokens(
     item: SearchItem,
     *,
@@ -123,9 +101,9 @@ def api_search() -> ResponseReturnValue:
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
-    service = _get_armtek_service()
-    context = _get_search_context()
-    repo = _get_characteristics_repo()
+    service = get_armtek_service()
+    context = get_search_context()
+    repo = get_characteristics_repo()
     try:
         item = service.get_main_search_item(pin=pin, brand=brand)
     except ArmtekError as exc:

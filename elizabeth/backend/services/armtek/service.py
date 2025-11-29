@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Iterable, Optional, Protocol, Type
+from typing import Any, Iterable, Optional, Protocol, Type
 
 from elizabeth.backend.config import ArmtekConfig
 from elizabeth.backend.models.characteristics import ProductHtmlDetails
@@ -71,6 +71,29 @@ class ArmtekService:
             vbeln=vbeln,
         )
 
+    def _build_search_kwargs(
+        self,
+        *,
+        pin: str,
+        brand: str | None,
+        query_type: int | None,
+        program: str | None,
+        kunnr_za: str | None,
+        incoterms: int | None,
+        vbeln: str | None,
+    ) -> dict[str, Any]:
+        return {
+            "vkorg": self._vkorg,
+            "kunnr_rg": self._kunnr_rg,
+            "pin": pin,
+            "brand": brand,
+            "query_type": query_type,
+            "program": program if program is not None else self._program,
+            "kunnr_za": kunnr_za if kunnr_za is not None else self._kunnr_za,
+            "incoterms": incoterms if incoterms is not None else self._incoterms,
+            "vbeln": vbeln if vbeln is not None else self._vbeln,
+        }
+
     def search_items(
         self,
         *,
@@ -83,17 +106,16 @@ class ArmtekService:
         vbeln: str | None = None,
     ) -> list[SearchItem]:
         """Получить список ``SearchItem`` напрямую из ``ArmtekClient``."""
-        return self._client.search(
-            vkorg=self._vkorg,
-            kunnr_rg=self._kunnr_rg,
+        params = self._build_search_kwargs(
             pin=pin,
             brand=brand,
             query_type=query_type,
-            program=program if program is not None else self._program,
-            kunnr_za=kunnr_za if kunnr_za is not None else self._kunnr_za,
-            incoterms=incoterms if incoterms is not None else self._incoterms,
-            vbeln=vbeln if vbeln is not None else self._vbeln,
+            program=program,
+            kunnr_za=kunnr_za,
+            incoterms=incoterms,
+            vbeln=vbeln,
         )
+        return self._client.search(**params)
 
     def get_main_search_item(
         self,

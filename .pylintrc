@@ -1,14 +1,10 @@
 [MASTER]
-init-hook='import sys; sys.path.insert(0, "src")'
+ignore=.venv
+
+[DESIGN]
+max-attributes=12
+max-args=10
+max-locals=20
 
 [MESSAGES CONTROL]
-disable=
-    missing-module-docstring,
-    missing-class-docstring,
-    missing-function-docstring,
-    too-few-public-methods,
-    too-many-arguments,
-    too-many-locals,
-    line-too-long,
-    protected-access,
-    undefined-all-variable
+disable=missing-module-docstring,missing-class-docstring,missing-function-docstring,too-few-public-methods,duplicate-code

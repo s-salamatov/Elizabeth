@@ -34,7 +34,7 @@ def test_choose_first_non_analog_first_item():
         ]
     )
 
-    result = service._choose_first_non_analog(service.search_items(pin="A"))
+    result = service.get_main_search_item(pin="A")
 
     assert result is not None
     assert result.artid == "1"
@@ -48,7 +48,7 @@ def test_choose_first_non_analog_skips_analogs():
         ]
     )
 
-    result = service._choose_first_non_analog(service.search_items(pin="A"))
+    result = service.get_main_search_item(pin="A")
 
     assert result is not None
     assert result.artid == "2"
@@ -62,7 +62,7 @@ def test_choose_first_non_analog_all_analogs():
         ]
     )
 
-    result = service._choose_first_non_analog(service.search_items(pin="A"))
+    result = service.get_main_search_item(pin="A")
 
     assert result is None
 

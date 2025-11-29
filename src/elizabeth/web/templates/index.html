@@ -37,29 +37,47 @@
           <form id="search-form" class="d-flex flex-column gap-3" novalidate>
             <div>
               <label class="form-label fw-semibold" for="search-input">Поисковый запрос</label>
-              <div class="input-group input-group-lg">
-                <span class="input-group-text"><i class="bi bi-search"></i></span>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="search-input"
-                  placeholder="Например: 332101 KYB"
-                  autocomplete="off"
-                  aria-describedby="search-help"
-                >
-                <button id="search-button" type="submit" class="btn btn-primary">
-                  <i class="bi bi-arrow-right-short"></i>
-                  Найти
-                </button>
+              <div class="d-flex flex-column gap-2">
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <textarea
+                    class="form-control single-line-textarea"
+                    id="search-input"
+                    rows="1"
+                    placeholder="332101_KYB, 332101 KYB, 332101"
+                    aria-describedby="search-help"
+                  ></textarea>
+                  <button id="search-button" type="submit" class="btn btn-primary" aria-label="Запустить поиск">
+                    <i class="bi bi-search"></i>
+                  </button>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="import-button" type="button" class="btn btn-outline-secondary">
+                    <i class="bi bi-upload"></i>
+                    Импортировать из файла
+                  </button>
+                  <input type="file" id="file-input" class="d-none" accept=".txt" />
+                </div>
               </div>
               <div class="d-flex align-items-center gap-2 mt-1 text-muted" id="search-help">
                 <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Введите артикул и бренд через пробел или подчёркивание."></i>
-                <small>Нажмите Enter или кнопку, чтобы выполнить поиск.</small>
+                <small>Поддерживаются разделители: запятая, точка с запятой, точка, слеш, перевод строки, тире.</small>
               </div>
             </div>
           </form>
 
           <div id="error-box" class="mt-3" role="alert" aria-live="assertive"></div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3 d-none" id="characteristics-actions">
+            <button type="button" class="btn btn-outline-primary" id="fetch-characteristics-btn" disabled>
+              <i class="bi bi-grid"></i>
+              Запросить параметры товаров
+            </button>
+            <button type="button" class="btn btn-outline-secondary d-none" id="retry-failed-btn" disabled>
+              <i class="bi bi-arrow-clockwise"></i>
+              Повторить запрос для неуспешных
+            </button>
+          </div>
 
           <div id="result-box" class="mt-4" role="status" aria-live="polite">
             <div class="muted-text">Результаты появятся здесь после поиска.</div>
@@ -75,7 +93,36 @@
       </div>
     </footer>
 
+    <div
+      class="modal fade"
+      id="confirm-modal"
+      tabindex="-1"
+      aria-labelledby="confirm-modal-label"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirm-modal-label">Открыть страницу Armtek</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-0" id="confirm-modal-text"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="confirm-modal-cancel">
+              Отмена
+            </button>
+            <button type="button" class="btn btn-primary" id="confirm-modal-confirm">Открыть</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+      window.BACKEND_BASE_URL = "{{ config['BACKEND_BASE_URL'] }}";
+    </script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   </body>
 </html>

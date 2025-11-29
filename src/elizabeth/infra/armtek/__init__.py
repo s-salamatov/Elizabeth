@@ -1,6 +1,12 @@
 from .client import ArmtekClient
 from .config import ArmtekConfig
-from .exceptions import ArmtekError, ArmtekHttpError, ArmtekResponseFormatError, ArmtekStatusError
+from .exceptions import (
+    ArmtekError,
+    ArmtekHttpError,
+    ArmtekInteractiveLoginRequired,
+    ArmtekResponseFormatError,
+    ArmtekStatusError,
+)
 from .services.search import SearchService
 from .services.user import UserService
 
@@ -11,6 +17,7 @@ __all__ = [
     "ArmtekHttpError",
     "ArmtekResponseFormatError",
     "ArmtekStatusError",
+    "ArmtekInteractiveLoginRequired",
     "SearchService",
     "UserService",
 ]

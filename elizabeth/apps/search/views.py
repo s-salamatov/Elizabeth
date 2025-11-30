@@ -30,6 +30,12 @@ from elizabeth.apps.search.services import (
 class SearchView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        history = SearchRequest.objects.filter(user=user)
+        return Response(SearchRequestSerializer(history, many=True).data)
+
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         assert request.user.is_authenticated
         user = cast(Any, request.user)

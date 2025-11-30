@@ -1,0 +1,142 @@
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/navbar";
+@import "bootstrap/scss/nav";
+@import "bootstrap/scss/card";
+@import "bootstrap/scss/accordion";
+@import "bootstrap/scss/tables";
+@import "bootstrap/scss/alert";
+@import "bootstrap/scss/spinners";
+@import "bootstrap/scss/close";
+@import "bootstrap/scss/badge";
+@import "bootstrap/scss/list-group";
+@import "bootstrap/scss/grid";
+@import "bootstrap/scss/helpers";
+
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+:root {
+  --elizabeth-gradient: linear-gradient(120deg, #6ea8fe, #c29fff);
+  --elizabeth-bg: #0b1224;
+  --elizabeth-panel: #0f172a;
+  --elizabeth-muted: #99a4c2;
+  --elizabeth-border: #1f2a44;
+}
+
+body {
+  background: radial-gradient(circle at 12% 10%, rgba(110, 168, 254, 0.1), transparent 20%),
+    radial-gradient(circle at 80% 15%, rgba(194, 159, 255, 0.08), transparent 28%),
+    linear-gradient(160deg, #0b1224 0%, #0f172a 55%, #0b1224 100%);
+  min-height: 100vh;
+  color: #e4e7f5;
+}
+
+body.theme-light {
+  background: #f6f7fb;
+  color: #1c2434;
+}
+
+body.theme-light .card {
+  background: #ffffff;
+  border-color: #e5e7ef;
+}
+
+.card {
+  background: #111a33;
+  border-color: var(--elizabeth-border);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.2);
+}
+
+.text-muted {
+  color: var(--elizabeth-muted) !important;
+}
+
+.hero-intro {
+  background: var(--elizabeth-panel);
+  border: 1px solid var(--elizabeth-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.badge-soft {
+  background: rgba(110, 168, 254, 0.12);
+  color: #cfe2ff;
+  border: 1px solid rgba(110, 168, 254, 0.3);
+}
+
+.btn-gradient {
+  background-image: var(--elizabeth-gradient);
+  color: #0b1224;
+  border: none;
+  box-shadow: 0 0.75rem 2rem rgba(110, 168, 254, 0.25);
+}
+
+.btn-outline-gradient {
+  border: 1px solid rgba(194, 159, 255, 0.4);
+  color: #c29fff;
+}
+
+.table thead th {
+  color: var(--elizabeth-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(110, 168, 254, 0.05);
+}
+
+.sidebar {
+  min-height: 100vh;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(12px);
+  border-right: 1px solid var(--elizabeth-border);
+}
+
+.sidebar .nav-link {
+  color: #d7ddf3;
+  border-radius: 0.75rem;
+  margin: 0.25rem 0;
+}
+
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+  background: rgba(110, 168, 254, 0.12);
+  color: #ffffff;
+}
+
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--elizabeth-border);
+}
+
+.form-text {
+  color: var(--elizabeth-muted);
+}
+
+.empty-state {
+  border: 1px dashed var(--elizabeth-border);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  text-align: center;
+  color: var(--elizabeth-muted);
+}
+
+@media (max-width: 991px) {
+  .sidebar {
+    min-height: auto;
+  }
+}

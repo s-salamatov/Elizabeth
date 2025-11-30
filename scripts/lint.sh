@@ -7,6 +7,11 @@ export PYTHONPATH="${PYTHONPATH:-}:${ROOT_DIR}"
 
 cd "${ROOT_DIR}"
 
+pushd frontend_spa >/dev/null
+npm ci
+npm run build
+popd >/dev/null
+
 python manage.py check
 black . --check
 isort . --check-only

@@ -22,6 +22,13 @@ python manage.py runserver 0.0.0.0:8000
 ```
 Переменные окружения (dev): см. `.env` пример; ключевые — `ARMTEK_ENABLE_STUB=1` чтобы демо работало без кредов.
 
+### SPA-фронтенд (Vue 3 + Vite)
+- Исходники: `frontend_spa/`, билд кладётся в `elizabeth/apps/frontend/static/frontend/`.
+- Установка зависимостей: `cd frontend_spa && npm install`.
+- Запуск dev-сервера: `npm run dev` (раздаёт `index.html`, но в проде используется Django-шаблон `frontend/app.html`).
+- Продакшн сборка: `npm run build`, затем `python manage.py collectstatic` при необходимости.
+- Страница приложения доступна по `/`, монтируется в `<div id="app"></div>` и работает только с REST API `/api/v1/...`.
+
 ## Поток работы (как в старом сценарии)
 1) Пользователь регистрируется/логинится через UI (JWT).
 2) В форме “Armtek credentials” сохраняет логин/пароль (endpoint `POST /api/v1/providers/armtek/credentials`).

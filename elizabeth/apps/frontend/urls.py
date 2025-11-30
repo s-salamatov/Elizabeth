@@ -1,7 +1,7 @@
 from django.urls import path
 
-from elizabeth.apps.frontend.views import SearchPageView
+from elizabeth.apps.frontend.views import FrontendAppView
 
 urlpatterns = [
-    path("", SearchPageView.as_view(), name="frontend-search"),
+    path("", FrontendAppView.as_view(), name="frontend-app"),
 ]

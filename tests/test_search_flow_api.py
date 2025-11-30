@@ -58,3 +58,29 @@ def test_stub_search_and_details_flow(settings):
     data = status_resp.json()[0]
     assert data["details_status"] == "ready"
     assert data["details"]["weight"] == "1.230"
+
+
+@pytest.mark.django_db
+def test_search_history_list(settings):
+    settings.ARMTEK_ENABLE_STUB = True
+    client = Client()
+
+    creds = {"username": "historyuser", "password": "StrongPass123"}
+    client.post("/api/v1/auth/register", creds, content_type="application/json")
+    login = client.post("/api/v1/auth/login", creds, content_type="application/json")
+    token = login.json()["tokens"]["access"]
+    headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+    search_resp = client.post(
+        "/api/v1/search/bulk",
+        {"bulk_text": "1234"},
+        content_type="application/json",
+        **headers,
+    )
+    assert search_resp.status_code == 201
+
+    list_resp = client.get("/api/v1/search/", **headers)
+    assert list_resp.status_code == 200
+    history = list_resp.json()
+    assert history, "Expected at least one history entry"
+    assert history[0]["query_string"]

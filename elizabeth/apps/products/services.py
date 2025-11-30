@@ -3,10 +3,18 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Iterable
 
+from uuid import uuid4
+
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 
-from apps.products.models import Product, ProductDetails
+from apps.products.models import (
+    DetailsRequestStatus,
+    Product,
+    ProductDetails,
+    ProductDetailsRequest,
+)
 
 
 def _cache_ttl() -> timedelta:
@@ -45,6 +53,7 @@ def upsert_product_from_search(item, *, source: str = "armtek") -> Product:
             changed = True
         if changed:
             product.save()
+    ensure_details_request(product)
     return product
 
 
@@ -62,4 +71,38 @@ def update_product_details(product: Product, *, data: dict) -> ProductDetails:
             setattr(details, field, data[field])
     details.fetched_at = timezone.now()
     details.save()
+    _set_details_request_status(product, DetailsRequestStatus.READY)
     return details
+
+
+def ensure_details_request(product: Product) -> ProductDetailsRequest:
+    request, created = ProductDetailsRequest.objects.get_or_create(
+        product=product,
+        defaults={
+            "request_id": uuid4(),
+            "status": DetailsRequestStatus.PENDING,
+        },
+    )
+    return request
+
+
+@transaction.atomic
+def mark_requests_pending(products: list[Product]) -> list[ProductDetailsRequest]:
+    requests: list[ProductDetailsRequest] = []
+    for product in products:
+        req = ensure_details_request(product)
+        if req.status != DetailsRequestStatus.PENDING:
+            req.status = DetailsRequestStatus.PENDING
+            req.save(update_fields=["status", "updated_at"])
+        requests.append(req)
+    return requests
+
+
+def _set_details_request_status(product: Product, status: DetailsRequestStatus) -> None:
+    try:
+        req = product.details_request
+    except ProductDetailsRequest.DoesNotExist:
+        req = ensure_details_request(product)
+    if req.status != status:
+        req.status = status
+        req.save(update_fields=["status", "updated_at"])

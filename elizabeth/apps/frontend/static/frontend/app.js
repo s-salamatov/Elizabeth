@@ -17,7 +17,13 @@
     tableBody: document.querySelector('#results-table tbody'),
     searchStatus: document.getElementById('search-status'),
     productCount: document.getElementById('product-count'),
+    refreshDetails: null,
   };
+
+  function renderTableHeaders() {
+    const thead = document.querySelector('#results-table thead tr');
+    thead.innerHTML = '<th>ArtID</th><th>PIN</th><th>Brand</th><th>Name</th><th>Source</th><th>Details</th>';
+  }
 
   function setAuthStatus(msg, isError = false) {
     els.authStatus.textContent = msg;
@@ -95,16 +101,42 @@
 
   function renderResults(products) {
     els.tableBody.innerHTML = '';
+    renderTableHeaders();
+    const requestIds = [];
     products.forEach((p) => {
       const tr = document.createElement('tr');
+      const status = p.details_status || 'pending';
+      if (p.request_id) requestIds.push(p.request_id);
       tr.innerHTML = `
         <td>${p.artid || ''}</td>
         <td>${p.pin || ''}</td>
         <td>${p.brand || ''}</td>
         <td>${p.name || ''}</td>
-        <td>${p.source || ''}</td>`;
+        <td>${p.source || ''}</td>
+        <td>${renderDetailsCell(p, status)}</td>`;
       els.tableBody.appendChild(tr);
     });
+    wirePollButton(requestIds);
+  }
+
+  function renderDetailsCell(p, status) {
+    if (p.details && status === 'ready') {
+      const d = p.details;
+      return `Ready · ${d.weight || '-'} kg · ${d.length || '-'}×${d.width || '-'}×${d.height || '-'} · ${d.image_url ? '<a href="' + d.image_url + '" target="_blank">img</a>' : ''}`;
+    }
+    return `${status}${p.request_id ? ' · id ' + p.request_id.slice(0, 8) + '…' : ''}`;
+  }
+
+  function wirePollButton(requestIds) {
+    let btn = document.getElementById('refresh-details-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'refresh-details-btn';
+      btn.textContent = 'Refresh details (extension)';
+      document.querySelector('section.card').appendChild(btn);
+    }
+    els.refreshDetails = btn;
+    btn.onclick = () => pollDetails(requestIds);
   }
 
   function bindFileInput() {
@@ -121,6 +153,28 @@
       };
       reader.readAsText(file);
     });
+  }
+
+  async function pollDetails(requestIds) {
+    if (!requestIds.length) {
+      els.searchStatus.textContent = 'No request ids to poll. Run a search first.';
+      return;
+    }
+    try {
+      const resp = await fetch(`${apiBase}/products/details/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_ids: requestIds }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data.detail || 'Status check failed');
+      }
+      renderResults(data);
+      els.searchStatus.textContent = 'Details refreshed from extension callbacks';
+    } catch (err) {
+      els.searchStatus.textContent = err.message;
+    }
   }
 
   // Event listeners

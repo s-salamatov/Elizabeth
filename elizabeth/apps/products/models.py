@@ -3,6 +3,12 @@ from __future__ import annotations
 from django.db import models
 
 
+class DetailsRequestStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    READY = "ready", "Ready"
+    FAILED = "failed", "Failed"
+
+
 class Product(models.Model):
     artid = models.CharField(max_length=64)
     brand = models.CharField(max_length=128)
@@ -24,6 +30,24 @@ class Product(models.Model):
 
     def __str__(self) -> str:  # pragma: no cover - display helper
         return f"{self.pin} ({self.brand})"
+
+
+class ProductDetailsRequest(models.Model):
+    product = models.OneToOneField(
+        Product, related_name="details_request", on_delete=models.CASCADE
+    )
+    request_id = models.UUIDField(unique=True)
+    status = models.CharField(
+        max_length=16,
+        choices=DetailsRequestStatus.choices,
+        default=DetailsRequestStatus.PENDING,
+    )
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:  # pragma: no cover - display helper
+        return f"Details request for {self.product_id}" if self.product_id else "Orphan request"
 
 
 class ProductDetails(models.Model):

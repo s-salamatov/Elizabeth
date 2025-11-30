@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.products.models import Product, ProductDetails
+from apps.products.models import (
+    DetailsRequestStatus,
+    Product,
+    ProductDetails,
+    ProductDetailsRequest,
+)
 
 
 class ProductDetailsSerializer(serializers.ModelSerializer):
@@ -38,6 +43,8 @@ class ProductDetailsInputSerializer(serializers.Serializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     details = ProductDetailsSerializer(read_only=True)
+    details_status = serializers.SerializerMethodField()
+    request_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -51,4 +58,18 @@ class ProductSerializer(serializers.ModelSerializer):
             "source",
             "fetched_at",
             "details",
+            "details_status",
+            "request_id",
         ]
+
+    def get_details_status(self, obj: Product) -> str:
+        try:
+            return obj.details_request.status
+        except ProductDetailsRequest.DoesNotExist:
+            return DetailsRequestStatus.PENDING
+
+    def get_request_id(self, obj: Product) -> str | None:
+        try:
+            return str(obj.details_request.request_id)
+        except ProductDetailsRequest.DoesNotExist:
+            return None

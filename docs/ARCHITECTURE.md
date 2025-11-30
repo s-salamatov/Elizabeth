@@ -1,30 +1,41 @@
-# Architecture
+# Architecture (Django API-first)
 
-## High-Level Layout
-- `elizabeth/backend/api/` — Flask blueprints for `/api/search`, `/api/armtek/characteristics`, `/health`.
-- `elizabeth/backend/services/armtek/` — HTTP client (`ArmtekHttpClient`), endpoint wrappers (`SearchService`, `UserService`), orchestration (`ArmtekService`), and the extension stub (`parser_adapter.py`).
-- `elizabeth/backend/services/tokens.py` — deterministic token helpers and `ArmtekSearchContext`.
-- `elizabeth/backend/repositories/` — characteristics storage interfaces and the in-memory implementation.
-- `elizabeth/backend/models/` — Pydantic models for Armtek payloads plus dataclasses for characteristics.
-- `elizabeth/backend/utils/` — validation helpers (response parsing, type normalization) and logging helper.
-- `elizabeth/backend/app.py` — Flask app factory wiring the blueprints and dependency instances.
-- `elizabeth/frontend/` — static assets and templates; delivered by Flask but kept separate from backend logic.
-- `elizabeth/extensions/` — browser userscript for collecting characteristics from the Armtek UI.
-- `tests/` — split by concern (`backend/` for Flask endpoints, `logic/` for service/client logic, `tokens/` for hashing and repositories).
+## Layout
+- `elizabeth/elizabeth/settings/` — base/dev/prod configs.
+- `elizabeth/apps/`
+  - `accounts` — JWT auth (SimpleJWT), user settings.
+  - `providers` — provider accounts (encrypted), Armtek credentials endpoint, Armtek search proxy.
+  - `products` — Product, ProductDetails, ProductDetailsRequest (`request_id`), ingest/status/jobs endpoints.
+  - `search` — single/bulk search orchestration, history (SearchRequest).
+  - `frontend` — template + static JS console that talks only to REST.
+- `extensions/armtek_extension.user.js` — browser helper posting details with `request_id`.
+- `elizabeth_legacy/` — archived Flask code and tests.
 
-## Layering
-- **API**: Blueprints receive requests, validate payloads, and delegate to services/repositories. CORS for the extension is isolated in the characteristics blueprint.
-- **Services**: `ArmtekService` orchestrates calls to `ArmtekClient` (search + structure). `SearchService` and `UserService` focus on endpoint-specific parsing and status handling. `parser_adapter.py` is the placeholder for extension-aware HTML parsing.
-- **Repositories**: `ArmtekCharacteristicsRepository` defines the persistence contract; `InMemoryArmtekCharacteristicsRepository` is the default for callbacks.
-- **Models**: Pydantic schemas normalize Armtek payloads; `CharacteristicsRecord` tracks callback lifecycle timestamps and readiness.
-- **Utils**: `validation.py` centralizes response shape checks and type coercion; `logger.py` provides a tiny logger helper.
+## Data Flow
+1. **Auth**: `/auth/register` → user + JWT pair; `/auth/login` → JWT pair.
+2. **Credentials**: `/providers/armtek/credentials` stores per-user login/password (encrypted) or uses env fallback.
+3. **Search**: `/search` or `/search/bulk` (or `/providers/armtek/search` direct) → Armtek service (stub in DEBUG) → upsert `Product` records.
+4. **Details orchestration**:
+   - Client calls `/products/details/request` with product_ids → `ProductDetailsRequest` per product (status pending).
+   - `/products/details/jobs` returns pending jobs with `open_url` to Armtek UI containing `request_id` and `product_id`.
+   - Userscript visits `open_url`, parses DOM, POSTs JSON to `/products/<id>/details` with header `X-Details-Token: request_id` → `ProductDetails` saved, status READY.
+   - UI polls `/products/details/status` with `request_ids` to render enriched data.
+5. **Caching**: `fetched_at` + `SEARCH_CACHE_TTL_MINUTES` guard repeat queries; `ARMTEK_ENABLE_STUB` for offline demo.
 
-## Flow Overview
-1. `/api/armtek/search` → `ArmtekService.get_main_search_item` → tokens generated (`api_token`, `elizabeth_token`), repository registers pending record.
-2. Userscript opens the Armtek product page with `elizabeth_token`, scrapes characteristics, and POSTs to `/api/armtek/characteristics`.
-3. Repository marks the record ready; UI polls the same endpoint until `status == ok`.
+## Services/Libs
+- Armtek HTTP client (`providers/armtek/client.py`) + search service (`services.py`), stub path when credentials отсутствуют.
+- Credentials encrypted via Fernet (`providers/models.py`, key из `PROVIDER_SECRET_KEY`).
+- Strict typing: mypy + django/drf plugins; linters via black/isort/flake8.
+
+## Testing & CI
+- Unit/API tests live in `tests/` (pytest + pytest-django).
+- CI workflow: migrate → check → black → isort → flake8 → mypy → pytest.
+
+## Extension Contract
+- URL params: `request_id`, `elizabeth_product_id`.
+- Endpoint: `POST /api/v1/products/<id>/details` with JSON {image_url, weight, length, width, height, analog_code} and header `X-Details-Token`.
+- Base API URL configurable inside userscript; default `http://127.0.0.1:8000/api/v1`.
 
 ## Notes
-- No Playwright or legacy HTML parsers are kept in backend code; the only parsing hook is the extension adapter.
-- Imports inside the project use absolute paths (e.g., `from elizabeth.backend.services.armtek.service import ArmtekService`).
-- Flask template/static folders point to `elizabeth/frontend/` to keep presentation assets separate from backend modules.
+- Legacy Flask tokens/characteristics endpoints removed; deterministic hashing заменён на UUID `request_id`.
+- All API access should go through DRF views; бизнес-логика — в сервисах.

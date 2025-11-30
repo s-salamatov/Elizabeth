@@ -29,6 +29,9 @@ jobs:
         run: |
           python manage.py migrate --noinput
 
+      - name: Django system check
+        run: python manage.py check
+
       - name: Run black
         run: black --check .
 

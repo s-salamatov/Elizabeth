@@ -1,30 +1,41 @@
-# How to Run
+# How to Run (Django)
 
-## Setup
-1. (Optional) Create venv: `python -m venv .venv && source .venv/bin/activate`
-2. Install deps: `pip install -r requirements.txt`
-
-## Environment
-- Required for real data: `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`
-- Optional: `ARMTEK_BASE_URL`, `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_TIMEOUT`
-- Frontend/extension: `ELIZABETH_BACKEND_BASE_URL` (UI fetch base), `ELIZABETH_EXTENSION_ALLOWED_ORIGIN` (CORS for extension callbacks)
-
-## Run the Backend/UI
+## 1. Setup
 ```bash
-python run.py
-# or
-FLASK_APP=run.py flask run --debug
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-Routes to verify after start:
-- `GET /health` → `{"status": "ok"}`
-- `POST /api/armtek/search` (JSON `{"query": "332101 KYB"}`) → search response with tokens
-- `GET|POST /api/armtek/characteristics` → pending/ready flow for extension callbacks
+## 2. Environment
+Create `.env` (dev defaults are fine):
+- Core: `SECRET_KEY`, `DEBUG=1`
+- DB: `DATABASE_URL` (по умолчанию SQLite)
+- Armtek: `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`, optional `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB=1` for offline demo, `ARMTEK_HTML_BASE_URL=https://etp.armtek.ru/artinfo/index`
+- CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `ELIZABETH_EXTENSION_ALLOWED_ORIGIN`
 
-## Testing
-- Fast suite: `pytest`
-- Integration (manual, calls real Armtek): `pytest -m integration` with the environment variables above set
+## 3. Migrate & Run
+```bash
+python manage.py migrate --noinput
+python manage.py runserver 0.0.0.0:8000
+```
 
-## Browser Helper
-- Install `elizabeth/extensions/armtek_extension.user.js` into Tampermonkey/Greasemonkey
-- The script reads `elizabeth_token` from the Armtek product URL and POSTs characteristics to `/api/armtek/characteristics`
+## 4. Workflow
+1. Откройте UI на `http://127.0.0.1:8000/`, зарегистрируйтесь/войдите.
+2. Сохраните Armtek credentials (форма в блоке Auth).
+3. Выполните поиск (single/bulk). Товары сохраняются в БД.
+4. Нажмите “Получить дополнительные характеристики” — бэкенд отдаст jobs с `open_url`.
+5. Userscript (Tampermonkey) открывает страницы Armtek, парсит и POST’ит в `/api/v1/products/<id>/details`.
+6. UI поллит `/api/v1/products/details/status` и отображает характеристики.
+
+## 5. Userscript
+`extensions/armtek_extension.user.js`
+- Настройте `API_BASE` внутри под своё окружение.
+- Ожидает параметры `request_id` и `elizabeth_product_id` в URL страницы Armtek.
+- Отправляет JSON в `/api/v1/products/<id>/details` с заголовком `X-Details-Token`.
+
+## 6. Tests & Linters
+- Полный набор: `./scripts/lint.sh` (manage.py check → black → isort → flake8 → mypy → pytest)
+- Отдельно: `python manage.py check`, `pytest`, `mypy .`, `flake8 .`, `black --check .`, `isort --check-only .`
+
+## 7. Integration (реальные запросы)
+Установите реальные креды Armtek и отключите `ARMTEK_ENABLE_STUB`.

@@ -1,65 +1,62 @@
 # Elizabeth (Django, API-first)
 
-Elizabeth is now a clean Django + Django REST Framework project. The API (v1) is the only interface for the web UI, browser extension, desktop/mobile clients, and future integrations. The legacy Flask codebase is preserved under `elizabeth_legacy/` for reference.
+Elizabeth — новая реализация на Django + Django REST Framework. API v1 — единственная точка для веб-UI, браузерного расширения и будущих клиентов.
 
-## Top-Level Layout
-- `elizabeth/` — Django project + settings (`base.py`, `dev.py`, `prod.py`)
-- `apps/` — domain apps
-  - `accounts/` — auth endpoints, user settings
-  - `providers/` — provider accounts and Armtek integration (`armtek/` client + services)
-  - `products/` — product + product details models and serializers
-  - `search/` — single/bulk search orchestration and history
-  - `frontend/` — templates + static JS calling the API only
-- `elizabeth_legacy/` — previous Flask implementation (kept for historical reference)
+## Кратко о слоях
+- `elizabeth/elizabeth/settings/` — base/dev/prod конфигурации.
+- `elizabeth/apps/` — доменные приложения:
+  - `accounts` — JWT-логин/регистрация, пользовательские настройки.
+  - `providers` — учётки провайдеров, Armtek credentials, Armtek proxy search.
+  - `products` — товары, детали, заявки на детали (`request_id`).
+  - `search` — single/bulk поиск, история запросов.
+  - `frontend` — шаблон + JS, работает только через REST.
+- `extensions/armtek_extension.user.js` — Tampermonkey/Greasemonkey-скрипт для сбора характеристик из Armtek HTML.
+- `elizabeth_legacy/` — старый Flask-код сохранён для истории.
 
-## Quickstart
+## Быстрый старт
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python manage.py migrate            # create DB (default SQLite)
-python manage.py createsuperuser    # optional
-python run.py                       # runs dev server at 0.0.0.0:8000
+python manage.py migrate --noinput
+python manage.py runserver 0.0.0.0:8000
 ```
+Переменные окружения (dev): см. `.env` пример; ключевые — `ARMTEK_ENABLE_STUB=1` чтобы демо работало без кредов.
 
-## Environment
-All variables are optional; set them in `.env` (loaded automatically):
+## Поток работы (как в старом сценарии)
+1) Пользователь регистрируется/логинится через UI (JWT).
+2) В форме “Armtek credentials” сохраняет логин/пароль (endpoint `POST /api/v1/providers/armtek/credentials`).
+3) Вводит артикулы (один или bulk) → `POST /api/v1/search` или `/search/bulk`; данные кешируются в БД.
+4) Нажимает “Получить дополнительные характеристики”: backend создаёт `request_id` на каждый товар и отдаёт jobs с `open_url` на Armtek.
+5) JS открывает эти URLs; userscript читает DOM Armtek и POST’ит в `/api/v1/products/<id>/details` (заголовок `X-Details-Token` = `request_id`).
+6) UI поллит `/api/v1/products/details/status` и показывает готовые характеристики в таблице.
 
-- Django: `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `DATABASE_URL`
-- CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `ELIZABETH_EXTENSION_ALLOWED_ORIGIN`
-- Armtek auth: `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`, `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_BASE_URL`, `ARMTEK_TIMEOUT`
-- Provider secrets: `PROVIDER_SECRET_KEY` (used to encrypt provider passwords; falls back to `SECRET_KEY`)
-- Cache: `SEARCH_CACHE_TTL_MINUTES` (freshness window for stored products)
+## Основные endpoints (v1)
+- `POST /auth/register`, `POST /auth/login`
+- `POST /providers/armtek/credentials`, `GET /providers/armtek/credentials`
+- `POST /providers/armtek/search`
+- `POST /search`, `POST /search/bulk`
+- `GET /products`, `GET /products/<id>`
+- `POST /products/details/request`, `GET /products/details/jobs`, `POST /products/details/status`
+- `POST /products/<id>/details` — колбэк от расширения
 
-## REST API (v1)
-- `POST /api/v1/auth/register` — create user, returns JWT pair
-- `POST /api/v1/auth/login` — obtain JWT pair
-- `POST /api/v1/search` — search one query (PIN, `PIN BRAND`, or `PIN_BRAND`)
-- `POST /api/v1/search/bulk` — bulk search (comma/semicolon/newline or `queries[]`)
-- `GET /api/v1/products` — list stored products
-- `GET /api/v1/products/<id>` — retrieve product
-- `POST /api/v1/products/<id>/details` — accept characteristics payload from the extension
-- `POST /api/v1/providers/armtek/search` — direct Armtek call, cached into products
+## Тесты и линтеры
+- `scripts/lint.sh` запускает: `manage.py check`, black, isort, flake8, mypy, pytest.
+- CI (`.github/workflows/ci.yml`) делает migrate, check, формат/линт/типизацию и pytest.
 
-Default auth: Bearer JWT (SimpleJWT). `ProductDetails` ingest endpoint is open to allow the browser extension to push data.
+## Userscript
+Файл: `extensions/armtek_extension.user.js`
+- Ожидает в URL параметры `request_id` и `elizabeth_product_id`.
+- Парсит страницу Armtek, отправляет JSON в `/api/v1/products/<id>/details`.
+- По умолчанию API_BASE в скрипте: `http://127.0.0.1:8000/api/v1` — смените на прод при деплое.
 
-## Frontend
-`apps/frontend/templates/frontend/search.html` renders a lightweight console UI. It only talks to the API via `fetch`, supports login, single search, bulk search (paste or `.txt` upload), and renders results. Styling uses Space Grotesk/Roboto Mono with a dark, non-default palette.
+## ENV важное
+- Armtek API: `ARMTEK_BASE_URL`, `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`, `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB`, `ARMTEK_HTML_BASE_URL` (для ссылок jobs).
+- CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `ELIZABETH_EXTENSION_ALLOWED_ORIGIN`.
+- Security: `SECRET_KEY`, `PROVIDER_SECRET_KEY` (для шифрования паролей провайдеров).
 
-## Armtek integration
-`apps/providers/armtek` contains the HTTP client and service wrapper. Credentials are taken from the current user’s provider account (if stored) or environment variables. With `DEBUG=True`, a stub search item is returned when credentials are missing so the UI can be demoed offline.
+## Документы
+- `docs/HOW_TO_RUN.md` — запуск и конфиг.
+- `docs/ARCHITECTURE.md` — слои и поток данных.
 
-## Legacy code
-The original Flask implementation now lives in `elizabeth_legacy/`. It is excluded from the active app and kept only for historical reference.
-
-## Testing & Tooling
-- `pytest` — placeholder; add new tests alongside the rewritten modules.
-- Format/lint configs live in `pyproject.toml`, `mypy.ini`, `pytest.ini`.
-- Planned linters: black, isort, flake8, mypy (already in requirements).
-
-## Roadmap (matching migration brief)
-1. Django scaffold + app layout ✅
-2. Core models and API v1 ✅
-3. Frontend template calling the API ✅
-4. Armtek client + stub for offline dev ✅
-5. Bulk search + characteristics ingest ✅
-6. Harden tests/linters and expand provider ecosystem (next)
+## Примечание
+Старые Flask-тесты и код не используются; новые тесты лежат в `tests/`.

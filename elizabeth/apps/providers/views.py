@@ -8,10 +8,19 @@ from rest_framework.views import APIView
 
 from elizabeth.apps.products.serializers import ProductSerializer
 from elizabeth.apps.products.services import upsert_products_from_search
-from elizabeth.apps.providers.armtek.exceptions import ArmtekCredentialsError, ArmtekError
+from elizabeth.apps.providers.armtek.exceptions import (
+    ArmtekCredentialsError,
+    ArmtekError,
+)
 from elizabeth.apps.providers.armtek.services import ArmtekSearchService
-from elizabeth.apps.providers.serializers import ArmtekSearchInputSerializer
-from elizabeth.apps.providers.services import resolve_armtek_credentials
+from elizabeth.apps.providers.serializers import (
+    ArmtekCredentialsSerializer,
+    ArmtekSearchInputSerializer,
+)
+from elizabeth.apps.providers.services import (
+    resolve_armtek_credentials,
+    save_provider_account,
+)
 
 
 class ArmtekSearchProxyView(APIView):
@@ -36,3 +45,36 @@ class ArmtekSearchProxyView(APIView):
 
         products = upsert_products_from_search(items, source="armtek")
         return Response(ProductSerializer(products, many=True).data)
+
+
+class ArmtekCredentialsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        credentials = resolve_armtek_credentials(request.user)
+        if credentials is None:
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {
+                "login": credentials.login,
+                "pin": credentials.pin,
+                "vkorg": credentials.vkorg,
+                "kunnr_rg": credentials.kunnr_rg,
+                "program": credentials.program,
+                "kunnr_za": credentials.kunnr_za,
+                "incoterms": credentials.incoterms,
+                "vbeln": credentials.vbeln,
+            }
+        )
+
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        serializer = ArmtekCredentialsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        save_provider_account(
+            user=request.user,
+            provider_name="armtek",
+            login=data["login"],
+            password=data["password"],
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)

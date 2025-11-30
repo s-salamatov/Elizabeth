@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Iterable, Protocol, Any
+from typing import Any, Iterable, Protocol
 from uuid import uuid4
 
 from django.conf import settings
@@ -35,7 +35,9 @@ def is_product_fresh(product: Product) -> bool:
     return timezone.now() - product.fetched_at <= _cache_ttl()
 
 
-def upsert_product_from_search(item: SearchItemLike, *, source: str = "armtek") -> Product:
+def upsert_product_from_search(
+    item: SearchItemLike, *, source: str = "armtek"
+) -> Product:
     defaults = {
         "brand": item.brand,
         "pin": item.pin,

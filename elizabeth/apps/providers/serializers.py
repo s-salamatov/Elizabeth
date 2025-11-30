@@ -8,9 +8,13 @@ from elizabeth.apps.search.parsers import split_pin_and_brand
 
 
 class ArmtekSearchInputSerializer(serializers.Serializer[dict[str, Any]]):
-    query: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
+    query: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
     pin: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
-    brand: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
+    brand: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         pin = attrs.get("pin")
@@ -25,3 +29,25 @@ class ArmtekSearchInputSerializer(serializers.Serializer[dict[str, Any]]):
         attrs["pin"] = pin
         attrs["brand"] = brand or None
         return attrs
+
+
+class ArmtekCredentialsSerializer(serializers.Serializer[dict[str, Any]]):
+    login: serializers.CharField = serializers.CharField()
+    password: serializers.CharField = serializers.CharField(write_only=True)
+    pin: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
+    vkorg: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
+    kunnr_rg: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
+    program: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
+    kunnr_za: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )
+    incoterms: serializers.IntegerField = serializers.IntegerField(required=False)
+    vbeln: serializers.CharField = serializers.CharField(
+        required=False, allow_blank=True
+    )

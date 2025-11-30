@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -32,7 +33,9 @@ class ProductDetailView(RetrieveAPIView[Product]):
 class ProductDetailsIngestView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, pk: int, *args: object, **kwargs: object) -> Response:
+    def post(
+        self, request: Request, pk: int, *args: object, **kwargs: object
+    ) -> Response:
         token = request.headers.get("X-Details-Token") or request.query_params.get(
             "request_id"
         )
@@ -81,6 +84,7 @@ class ProductDetailsRequestView(APIView):
                 "product_id": req.product_id,
                 "request_id": str(req.request_id),
                 "status": req.status,
+                "artid": req.product.artid,
             }
             for req in requests
         ]
@@ -106,3 +110,39 @@ class ProductDetailsStatusView(APIView):
         for product in requests:
             serialized.append(ProductSerializer(product).data)
         return Response(serialized)
+
+
+class ProductDetailsJobsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        limit_raw = request.query_params.get("limit") or "20"
+        try:
+            limit = max(1, min(int(limit_raw), 200))
+        except ValueError:
+            limit = 20
+
+        pending = (
+            Product.objects.filter(details_request__status="pending")
+            .select_related("details_request")
+            .order_by("-details_request__created_at")[:limit]
+        )
+        base_url = getattr(
+            settings, "ARMTEK_HTML_BASE_URL", "https://etp.armtek.ru/artinfo/index"
+        ).rstrip("/")
+        jobs = []
+        for product in pending:
+            req = product.details_request
+            open_url = (
+                f"{base_url}/{product.artid}"
+                f"?elizabeth_product_id={product.id}&request_id={req.request_id}"
+            )
+            jobs.append(
+                {
+                    "product_id": product.id,
+                    "artid": product.artid,
+                    "request_id": str(req.request_id),
+                    "open_url": open_url,
+                }
+            )
+        return Response(jobs)

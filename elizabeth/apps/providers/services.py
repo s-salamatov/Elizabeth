@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional, TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 
 from elizabeth.apps.providers.models import ProviderAccount, ProviderName
@@ -45,9 +45,7 @@ def save_provider_account(
     return account
 
 
-def get_provider_account(
-    *, user: Any, provider_name: str
-) -> Optional[ProviderAccount]:
+def get_provider_account(*, user: Any, provider_name: str) -> Optional[ProviderAccount]:
     try:
         return ProviderAccount.objects.get(user=user, provider_name=provider_name)
     except ProviderAccount.DoesNotExist:

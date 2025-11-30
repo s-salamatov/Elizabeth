@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from elizabeth.apps.products.serializers import ProductSerializer
-from elizabeth.apps.providers.armtek.exceptions import ArmtekCredentialsError, ArmtekError
+from elizabeth.apps.providers.armtek.exceptions import (
+    ArmtekCredentialsError,
+    ArmtekError,
+)
 from elizabeth.apps.search.serializers import (
     BulkSearchSerializer,
     SearchInputSerializer,

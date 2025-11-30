@@ -1,7 +1,10 @@
 import pytest
 
 from elizabeth.apps.products.models import DetailsRequestStatus, Product
-from elizabeth.apps.products.services import ensure_details_request, mark_requests_pending
+from elizabeth.apps.products.services import (
+    ensure_details_request,
+    mark_requests_pending,
+)
 
 
 @pytest.mark.django_db

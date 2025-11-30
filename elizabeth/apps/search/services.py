@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Tuple, Any
+from typing import Any, Iterable, List, Tuple
 
 from django.db import transaction
 

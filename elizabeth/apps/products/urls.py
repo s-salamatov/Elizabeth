@@ -2,6 +2,7 @@ from django.urls import path
 
 from elizabeth.apps.products.views import (
     ProductDetailsIngestView,
+    ProductDetailsJobsView,
     ProductDetailsRequestView,
     ProductDetailsStatusView,
     ProductDetailView,
@@ -24,4 +25,5 @@ urlpatterns = [
         ProductDetailsStatusView.as_view(),
         name="product-details-status",
     ),
+    path("details/jobs", ProductDetailsJobsView.as_view(), name="product-details-jobs"),
 ]

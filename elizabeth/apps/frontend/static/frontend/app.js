@@ -18,7 +18,35 @@
     searchStatus: document.getElementById('search-status'),
     productCount: document.getElementById('product-count'),
     refreshDetails: null,
+    credsLogin: null,
+    credsPassword: null,
+    credsBtn: null,
   };
+
+  function ensureCredentialInputs() {
+    let card = document.getElementById('auth-card');
+    const loginLabel = document.createElement('label');
+    loginLabel.textContent = 'Armtek login';
+    const loginInput = document.createElement('input');
+    loginInput.placeholder = 'ARMTEK login';
+    const passwordLabel = document.createElement('label');
+    passwordLabel.textContent = 'Armtek password';
+    const passwordInput = document.createElement('input');
+    passwordInput.type = 'password';
+    passwordInput.placeholder = 'ARMTEK password';
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save Armtek credentials';
+    saveBtn.classList.add('secondary');
+    card.appendChild(loginLabel);
+    card.appendChild(loginInput);
+    card.appendChild(passwordLabel);
+    card.appendChild(passwordInput);
+    card.appendChild(saveBtn);
+    els.credsLogin = loginInput;
+    els.credsPassword = passwordInput;
+    els.credsBtn = saveBtn;
+    saveBtn.onclick = saveCredentials;
+  }
 
   function renderTableHeaders() {
     const thead = document.querySelector('#results-table thead tr');
@@ -54,6 +82,35 @@
       refreshToken = data.tokens?.refresh;
       setAuthStatus('Token issued. You can search now.');
       els.searchStatus.textContent = 'Authenticated. Ready to search…';
+    } catch (err) {
+      setAuthStatus(err.message, true);
+    }
+  }
+
+  async function saveCredentials() {
+    if (!accessToken) {
+      setAuthStatus('Get JWT first', true);
+      return;
+    }
+    const payload = {
+      login: els.credsLogin.value.trim(),
+      password: els.credsPassword.value.trim(),
+    };
+    if (!payload.login || !payload.password) {
+      setAuthStatus('Login/password required for Armtek', true);
+      return;
+    }
+    try {
+      const resp = await fetch(`${apiBase}/providers/armtek/credentials`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error('Saving credentials failed');
+      setAuthStatus('Armtek credentials saved');
     } catch (err) {
       setAuthStatus(err.message, true);
     }
@@ -117,6 +174,7 @@
       els.tableBody.appendChild(tr);
     });
     wirePollButton(requestIds);
+    wireJobsButton(products.map((p) => p.id));
   }
 
   function renderDetailsCell(p, status) {
@@ -137,6 +195,17 @@
     }
     els.refreshDetails = btn;
     btn.onclick = () => pollDetails(requestIds);
+  }
+
+  function wireJobsButton(productIds) {
+    let btn = document.getElementById('open-jobs-btn');
+    if (!btn) {
+      btn = document.createElement('button');
+      btn.id = 'open-jobs-btn';
+      btn.textContent = 'Получить дополнительные характеристики';
+      document.querySelector('section.card').appendChild(btn);
+    }
+    btn.onclick = () => startDetailsFlow(productIds);
   }
 
   function bindFileInput() {
@@ -177,10 +246,41 @@
     }
   }
 
+  async function startDetailsFlow(productIds) {
+    if (!productIds || !productIds.length) {
+      els.searchStatus.textContent = 'Нет товаров для запроса деталей';
+      return;
+    }
+    try {
+      await fetch(`${apiBase}/products/details/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ product_ids: productIds }),
+      });
+      const jobsResp = await fetch(`${apiBase}/products/details/jobs?limit=50`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const jobs = await jobsResp.json();
+      jobs.forEach((job) => {
+        window.open(job.open_url, '_blank', 'noopener,noreferrer');
+      });
+      const ids = jobs.map((j) => j.request_id);
+      if (ids.length) {
+        setTimeout(() => pollDetails(ids), 5000);
+      }
+    } catch (err) {
+      els.searchStatus.textContent = err.message;
+    }
+  }
+
   // Event listeners
   els.loginBtn.addEventListener('click', () => auth('login'));
   els.registerBtn.addEventListener('click', () => auth('register'));
   els.singleSearch.addEventListener('click', () => runSearch(false));
   els.bulkSearch.addEventListener('click', () => runSearch(true));
   bindFileInput();
+  ensureCredentialInputs();
 })();

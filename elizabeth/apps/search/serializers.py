@@ -23,9 +23,7 @@ class BulkSearchSerializer(serializers.Serializer[dict[str, Any]]):
             child=serializers.CharField(), required=False, allow_empty=True
         ),
     )
-    bulk_text = cast(
-        Any, serializers.CharField(required=False, allow_blank=True)
-    )
+    bulk_text = cast(Any, serializers.CharField(required=False, allow_blank=True))
     source = cast(Any, serializers.CharField(default="armtek"))
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:

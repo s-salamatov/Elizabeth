@@ -146,5 +146,8 @@ ARMTEK_INCOTERMS = (
     int(ARMTEK_INCOTERMS_RAW) if ARMTEK_INCOTERMS_RAW not in (None, "") else None
 )
 ARMTEK_ENABLE_STUB = env.bool("ARMTEK_ENABLE_STUB", default=DEBUG)
+ARMTEK_HTML_BASE_URL = env(
+    "ARMTEK_HTML_BASE_URL", default="https://etp.armtek.ru/artinfo/index"
+)
 
 SEARCH_CACHE_TTL_MINUTES = env.int("SEARCH_CACHE_TTL_MINUTES", default=60)

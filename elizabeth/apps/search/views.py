@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -29,12 +31,14 @@ class SearchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         serializer = SearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             search_request, products = perform_single_search(
                 serializer.validated_data["query"],
-                user=request.user,
+                user=user,
                 source=serializer.validated_data.get("source", "armtek"),
             )
         except ArmtekCredentialsError as exc:
@@ -55,13 +59,15 @@ class BulkSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         serializer = BulkSearchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         queries = parse_bulk_payload(serializer.validated_data)
         try:
             search_request, products = perform_bulk_search(
                 queries,
-                user=request.user,
+                user=user,
                 source=serializer.validated_data.get("source", "armtek"),
             )
         except ArmtekCredentialsError as exc:
@@ -84,8 +90,10 @@ class SearchDetailView(APIView):
     def get(
         self, request: Request, pk: int, *args: object, **kwargs: object
     ) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         try:
-            search_request = SearchRequest.objects.get(pk=pk, user=request.user)
+            search_request = SearchRequest.objects.get(pk=pk, user=user)
         except SearchRequest.DoesNotExist:
             return Response(
                 {"detail": "Search request not found"},

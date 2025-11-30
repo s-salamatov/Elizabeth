@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import Any, List, cast
+
 from django.conf import settings
+from django.db.models import QuerySet
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -24,11 +27,18 @@ class ProductListView(ListAPIView[Product]):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
 
-    def get_queryset(self):  # type: ignore[override]
-        qs = Product.objects.filter(user=self.request.user).order_by("-created_at")
-        search_request_id = self.request.query_params.get("search_request_id")
-        if search_request_id:
-            qs = qs.filter(search_request_id=search_request_id)
+    def get_queryset(self) -> QuerySet[Product]:
+        assert self.request.user.is_authenticated
+        user = cast(Any, self.request.user)
+        qs = Product.objects.filter(user=user).order_by("-created_at")
+        search_request_id_raw = self.request.query_params.get("search_request_id")
+        if search_request_id_raw:
+            try:
+                search_request_id = int(search_request_id_raw)
+            except (TypeError, ValueError):
+                search_request_id = None
+            if search_request_id is not None:
+                qs = qs.filter(search_request_id=search_request_id)
         return qs
 
 
@@ -36,8 +46,10 @@ class ProductDetailView(RetrieveAPIView[Product]):
     permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
 
-    def get_queryset(self):  # type: ignore[override]
-        return Product.objects.filter(user=self.request.user)
+    def get_queryset(self) -> QuerySet[Product]:
+        assert self.request.user.is_authenticated
+        user = cast(Any, self.request.user)
+        return Product.objects.filter(user=user)
 
 
 class ProductDetailsIngestView(APIView):
@@ -81,14 +93,16 @@ class ProductDetailsRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         product_ids = request.data.get("product_ids") or []
         if not isinstance(product_ids, list) or not product_ids:
             return Response(
                 {"detail": "Provide product_ids array"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        products = list(
-            Product.objects.filter(id__in=product_ids, user=request.user)
+        products: List[Product] = list(
+            Product.objects.filter(id__in=product_ids, user=user)
         )
         if not products:
             return Response(
@@ -132,6 +146,8 @@ class ProductDetailsJobsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         limit_raw = request.query_params.get("limit") or "20"
         try:
             limit = max(1, min(int(limit_raw), 200))
@@ -139,9 +155,7 @@ class ProductDetailsJobsView(APIView):
             limit = 20
 
         pending = (
-            Product.objects.filter(
-                details_request__status="pending", user=request.user
-            )
+            Product.objects.filter(details_request__status="pending", user=user)
             .select_related("details_request")
             .order_by("-details_request__created_at")[:limit]
         )

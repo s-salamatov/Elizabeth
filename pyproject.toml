@@ -7,4 +7,4 @@ extend-exclude = "elizabeth_legacy"
 profile = "black"
 line_length = 88
 src_paths = ["elizabeth", "tests"]
-skip = ["elizabeth_legacy"]
+skip = ["elizabeth_legacy", ".venv"]

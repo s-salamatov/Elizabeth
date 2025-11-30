@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-
 SEPARATORS_PATTERN = re.compile(r"[\n,;]+")
 
 

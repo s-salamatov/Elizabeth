@@ -5,8 +5,14 @@ from django.test import Client
 @pytest.mark.django_db
 def test_register_and_login_returns_tokens():
     client = Client()
-    payload = {"username": "user1", "password": "Password123", "email": "u1@example.com"}
-    resp = client.post("/api/v1/auth/register", payload, content_type="application/json")
+    payload = {
+        "username": "user1",
+        "password": "Password123",
+        "email": "u1@example.com",
+    }
+    resp = client.post(
+        "/api/v1/auth/register", payload, content_type="application/json"
+    )
     assert resp.status_code == 201
     data = resp.json()
     assert "access" in data["tokens"]

@@ -6,20 +6,24 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.products.serializers import ProductSerializer
-from apps.providers.armtek.exceptions import ArmtekCredentialsError, ArmtekError
-from apps.search.serializers import (
+from elizabeth.apps.products.serializers import ProductSerializer
+from elizabeth.apps.providers.armtek.exceptions import ArmtekCredentialsError, ArmtekError
+from elizabeth.apps.search.serializers import (
     BulkSearchSerializer,
     SearchInputSerializer,
     SearchRequestSerializer,
 )
-from apps.search.services import parse_bulk_payload, perform_bulk_search, perform_single_search
+from elizabeth.apps.search.services import (
+    parse_bulk_payload,
+    perform_bulk_search,
+    perform_single_search,
+)
 
 
 class SearchView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args, **kwargs) -> Response:
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         serializer = SearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -45,7 +49,7 @@ class SearchView(APIView):
 class BulkSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args, **kwargs) -> Response:
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         serializer = BulkSearchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         queries = parse_bulk_payload(serializer.validated_data)

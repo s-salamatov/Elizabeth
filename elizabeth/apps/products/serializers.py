@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from typing import Any
+
 from rest_framework import serializers
 
-from apps.products.models import (
+from elizabeth.apps.products.models import (
     DetailsRequestStatus,
     Product,
     ProductDetails,
@@ -10,8 +12,12 @@ from apps.products.models import (
 )
 
 
-class ProductDetailsSerializer(serializers.ModelSerializer):
+class ProductDetailsSerializer(serializers.ModelSerializer[ProductDetails]):
+    """Read-only representation of product details."""
+
     class Meta:
+        """Product details read serializer config."""
+
         model = ProductDetails
         fields = [
             "image_url",
@@ -24,7 +30,9 @@ class ProductDetailsSerializer(serializers.ModelSerializer):
         ]
 
 
-class ProductDetailsInputSerializer(serializers.Serializer):
+class ProductDetailsInputSerializer(serializers.Serializer[dict[str, Any]]):
+    """Payload accepted from browser extension."""
+
     image_url = serializers.URLField(required=False, allow_blank=True)
     weight = serializers.DecimalField(
         max_digits=10, decimal_places=3, required=False, allow_null=True
@@ -41,12 +49,16 @@ class ProductDetailsInputSerializer(serializers.Serializer):
     analog_code = serializers.CharField(required=False, allow_blank=True)
 
 
-class ProductSerializer(serializers.ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer[Product]):
+    """Serialized product with optional details and request id."""
+
     details = ProductDetailsSerializer(read_only=True)
     details_status = serializers.SerializerMethodField()
     request_id = serializers.SerializerMethodField()
 
     class Meta:
+        """Product read serializer with relations."""
+
         model = Product
         fields = [
             "id",

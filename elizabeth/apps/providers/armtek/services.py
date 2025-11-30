@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 from django.conf import settings
 
-from apps.providers.armtek.client import ArmtekClient
-from apps.providers.armtek.exceptions import ArmtekCredentialsError
-from apps.providers.armtek.types import ArmtekSearchItem
-from apps.providers.services import ArmtekCredentials
+from elizabeth.apps.providers.armtek.client import ArmtekClient
+from elizabeth.apps.providers.armtek.exceptions import ArmtekCredentialsError
+from elizabeth.apps.providers.armtek.types import ArmtekSearchItem
+from elizabeth.apps.providers.services import ArmtekCredentials
 
 
 class ArmtekSearchService:
@@ -29,9 +29,10 @@ class ArmtekSearchService:
         )
 
     def search(self, *, pin: str, brand: str | None = None) -> List[ArmtekSearchItem]:
+        if self.enable_stub:
+            return [self._build_stub_item(pin=pin, brand=brand)]
+
         if self.credentials is None:
-            if self.enable_stub:
-                return [self._build_stub_item(pin=pin, brand=brand)]
             raise ArmtekCredentialsError("Armtek credentials are not configured")
 
         if not self.credentials.vkorg or not self.credentials.kunnr_rg:

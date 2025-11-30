@@ -4,12 +4,16 @@ from django.db import models
 
 
 class DetailsRequestStatus(models.TextChoices):
+    """States of detail collection."""
+
     PENDING = "pending", "Pending"
     READY = "ready", "Ready"
     FAILED = "failed", "Failed"
 
 
 class Product(models.Model):
+    """Stored product search result."""
+
     artid = models.CharField(max_length=64)
     brand = models.CharField(max_length=128)
     pin = models.CharField(max_length=128)
@@ -21,6 +25,8 @@ class Product(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Uniqueness and indexes for product table."""
+
         unique_together = ("artid", "source")
         indexes = [
             models.Index(fields=["pin"]),
@@ -33,6 +39,8 @@ class Product(models.Model):
 
 
 class ProductDetailsRequest(models.Model):
+    """Correlation record for extension callbacks."""
+
     product = models.OneToOneField(
         Product, related_name="details_request", on_delete=models.CASCADE
     )
@@ -47,10 +55,16 @@ class ProductDetailsRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:  # pragma: no cover - display helper
-        return f"Details request for {self.product_id}" if self.product_id else "Orphan request"
+        return (
+            f"Details request for {self.product_id}"
+            if self.product_id
+            else "Orphan request"
+        )
 
 
 class ProductDetails(models.Model):
+    """HTML-scraped characteristics for a product."""
+
     product = models.OneToOneField(
         Product, related_name="details", on_delete=models.CASCADE
     )
@@ -65,4 +79,6 @@ class ProductDetails(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:  # pragma: no cover - display helper
-        return f"Details for {self.product_id}" if self.product_id else "Detached details"
+        return (
+            f"Details for {self.product_id}" if self.product_id else "Detached details"
+        )

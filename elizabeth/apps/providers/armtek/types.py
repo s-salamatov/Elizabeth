@@ -10,6 +10,7 @@ class ArmtekSearchItem:
     brand: str
     name: str
     artid: str
+    oem: Optional[str] = None
     is_analog: Optional[bool] = None
     price: Optional[float] = None
     currency: Optional[str] = None

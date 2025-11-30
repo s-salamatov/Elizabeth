@@ -1,16 +1,18 @@
 from __future__ import annotations
 
+from typing import Any
+
 from rest_framework import serializers
 
-from apps.search.parsers import split_pin_and_brand
+from elizabeth.apps.search.parsers import split_pin_and_brand
 
 
-class ArmtekSearchInputSerializer(serializers.Serializer):
-    query = serializers.CharField(required=False, allow_blank=True)
-    pin = serializers.CharField(required=False, allow_blank=True)
-    brand = serializers.CharField(required=False, allow_blank=True)
+class ArmtekSearchInputSerializer(serializers.Serializer[dict[str, Any]]):
+    query: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
+    pin: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
+    brand: serializers.CharField = serializers.CharField(required=False, allow_blank=True)
 
-    def validate(self, attrs):
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         pin = attrs.get("pin")
         brand = attrs.get("brand")
         query = attrs.get("query")

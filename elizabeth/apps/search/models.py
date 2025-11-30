@@ -5,6 +5,8 @@ from django.db import models
 
 
 class SearchStatus(models.TextChoices):
+    """Lifecycle of a search request."""
+
     PENDING = "pending", "Pending"
     IN_PROGRESS = "in_progress", "In progress"
     DONE = "done", "Done"
@@ -12,6 +14,8 @@ class SearchStatus(models.TextChoices):
 
 
 class SearchRequest(models.Model):
+    """History entry for bulk/single searches."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -29,6 +33,8 @@ class SearchRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Sort newest first for UX."""
+
         ordering = ["-created_at"]
 
     def __str__(self) -> str:  # pragma: no cover - display helper

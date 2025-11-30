@@ -29,11 +29,11 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework.authtoken",
-    "apps.accounts",
-    "apps.providers",
-    "apps.products",
-    "apps.search",
-    "apps.frontend",
+    "elizabeth.apps.accounts",
+    "elizabeth.apps.providers",
+    "elizabeth.apps.products",
+    "elizabeth.apps.search",
+    "elizabeth.apps.frontend",
 ]
 
 MIDDLEWARE = [
@@ -47,7 +47,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "elizabeth.urls"
+ROOT_URLCONF = "elizabeth.elizabeth.urls"
 
 TEMPLATES = [
     {
@@ -65,8 +65,8 @@ TEMPLATES = [
     }
 ]
 
-WSGI_APPLICATION = "elizabeth.wsgi.application"
-ASGI_APPLICATION = "elizabeth.asgi.application"
+WSGI_APPLICATION = "elizabeth.elizabeth.wsgi.application"
+ASGI_APPLICATION = "elizabeth.elizabeth.asgi.application"
 
 DATABASES = {
     "default": env.db(
@@ -76,7 +76,11 @@ DATABASES = {
 }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": (
+            "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+        )
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
@@ -97,9 +101,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
 }
@@ -109,6 +111,11 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
     "ROTATE_REFRESH_TOKENS": False,
 }
+
+FRONTEND_ORIGIN = env("ELIZABETH_FRONTEND_ORIGIN", default="")
+EXTENSION_ALLOWED_ORIGIN = env(
+    "ELIZABETH_EXTENSION_ALLOWED_ORIGIN", default=FRONTEND_ORIGIN
+)
 
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL_ORIGINS", default=False)
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
@@ -120,11 +127,6 @@ if EXTENSION_ALLOWED_ORIGIN and EXTENSION_ALLOWED_ORIGIN not in CORS_ALLOWED_ORI
     CORS_ALLOWED_ORIGINS.append(EXTENSION_ALLOWED_ORIGIN)
 
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
-
-FRONTEND_ORIGIN = env("ELIZABETH_FRONTEND_ORIGIN", default="")
-EXTENSION_ALLOWED_ORIGIN = env(
-    "ELIZABETH_EXTENSION_ALLOWED_ORIGIN", default=FRONTEND_ORIGIN
-)
 
 PROVIDER_SECRET_KEY = env("PROVIDER_SECRET_KEY", default="".ljust(32, "x"))
 

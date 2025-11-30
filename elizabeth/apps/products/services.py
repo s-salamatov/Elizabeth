@@ -1,20 +1,27 @@
 from __future__ import annotations
 
 from datetime import timedelta
-from typing import Iterable
-
+from typing import Iterable, Protocol, Any
 from uuid import uuid4
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.products.models import (
+from elizabeth.apps.products.models import (
     DetailsRequestStatus,
     Product,
     ProductDetails,
     ProductDetailsRequest,
 )
+
+
+class SearchItemLike(Protocol):
+    artid: str
+    brand: str
+    pin: str
+    name: str
+    oem: str | None
 
 
 def _cache_ttl() -> timedelta:
@@ -28,7 +35,7 @@ def is_product_fresh(product: Product) -> bool:
     return timezone.now() - product.fetched_at <= _cache_ttl()
 
 
-def upsert_product_from_search(item, *, source: str = "armtek") -> Product:
+def upsert_product_from_search(item: SearchItemLike, *, source: str = "armtek") -> Product:
     defaults = {
         "brand": item.brand,
         "pin": item.pin,
@@ -57,14 +64,16 @@ def upsert_product_from_search(item, *, source: str = "armtek") -> Product:
     return product
 
 
-def upsert_products_from_search(items: Iterable, *, source: str = "armtek") -> list[Product]:
+def upsert_products_from_search(
+    items: Iterable[SearchItemLike], *, source: str = "armtek"
+) -> list[Product]:
     products: list[Product] = []
     for item in items:
         products.append(upsert_product_from_search(item, source=source))
     return products
 
 
-def update_product_details(product: Product, *, data: dict) -> ProductDetails:
+def update_product_details(product: Product, *, data: dict[str, Any]) -> ProductDetails:
     details, _ = ProductDetails.objects.get_or_create(product=product)
     for field in ["image_url", "weight", "length", "width", "height", "analog_code"]:
         if field in data:

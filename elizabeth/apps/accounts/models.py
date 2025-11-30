@@ -3,6 +3,8 @@ from django.db import models
 
 
 class UserSettings(models.Model):
+    """Per-user application preferences."""
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, related_name="settings", on_delete=models.CASCADE
     )
@@ -11,6 +13,8 @@ class UserSettings(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Django meta options."""
+
         verbose_name = "User settings"
         verbose_name_plural = "User settings"
 

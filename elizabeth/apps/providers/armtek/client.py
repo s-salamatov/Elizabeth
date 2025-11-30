@@ -4,12 +4,12 @@ from typing import Any, Dict, Iterable, Mapping, Optional
 
 import httpx
 
-from apps.providers.armtek.exceptions import (
+from elizabeth.apps.providers.armtek.exceptions import (
     ArmtekCredentialsError,
     ArmtekError,
     ArmtekResponseError,
 )
-from apps.providers.armtek.types import ArmtekSearchItem
+from elizabeth.apps.providers.armtek.types import ArmtekSearchItem
 
 
 class ArmtekClient:
@@ -25,7 +25,9 @@ class ArmtekClient:
         self.base_url = base_url.rstrip("/")
         self.login = login
         self.password = password
-        self._client = httpx.Client(base_url=self.base_url, timeout=timeout, transport=transport)
+        self._client = httpx.Client(
+            base_url=self.base_url, timeout=timeout, transport=transport
+        )
 
     def close(self) -> None:
         self._client.close()
@@ -83,7 +85,11 @@ class ArmtekClient:
                     brand=str(entry.get("BRAND", brand or "")),
                     name=str(entry.get("NAME", "")),
                     artid=str(entry.get("ARTID", "")),
-                    is_analog=bool(entry.get("ANALOG")) if entry.get("ANALOG") is not None else None,
+                    is_analog=(
+                        bool(entry.get("ANALOG"))
+                        if entry.get("ANALOG") is not None
+                        else None
+                    ),
                     price=_coerce_float(entry.get("PRICE")),
                     currency=str(entry.get("WAERS")) if entry.get("WAERS") else None,
                     raw=entry,
@@ -102,14 +108,22 @@ class ArmtekClient:
         except httpx.RequestError as exc:  # pragma: no cover - network guard
             raise ArmtekError(f"Network error contacting Armtek: {exc}") from exc
         try:
-            return response.json()
+            payload = response.json()
         except ValueError as exc:  # pragma: no cover - parsing guard
             raise ArmtekResponseError("Armtek returned non-JSON payload") from exc
+        if not isinstance(payload, Mapping):
+            raise ArmtekResponseError("Armtek response must be a mapping")
+        return payload
 
     def __enter__(self) -> "ArmtekClient":
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
         self.close()
 
 

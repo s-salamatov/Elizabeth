@@ -1,5 +1,5 @@
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -11,7 +11,15 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="Product",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("artid", models.CharField(max_length=64)),
                 ("brand", models.CharField(max_length=128)),
                 ("pin", models.CharField(max_length=128)),
@@ -29,12 +37,40 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ProductDetails",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
                 ("image_url", models.URLField(blank=True)),
-                ("weight", models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True)),
-                ("length", models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ("width", models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ("height", models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
+                (
+                    "weight",
+                    models.DecimalField(
+                        blank=True, decimal_places=3, max_digits=10, null=True
+                    ),
+                ),
+                (
+                    "length",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                (
+                    "width",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                (
+                    "height",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
                 ("analog_code", models.CharField(blank=True, max_length=128)),
                 ("fetched_at", models.DateTimeField(blank=True, null=True)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -44,6 +80,44 @@ class Migration(migrations.Migration):
                     models.OneToOneField(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="details",
+                        to="products.product",
+                    ),
+                ),
+            ],
+        ),
+        migrations.CreateModel(
+            name="ProductDetailsRequest",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("request_id", models.UUIDField(unique=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("ready", "Ready"),
+                            ("failed", "Failed"),
+                        ],
+                        default="pending",
+                        max_length=16,
+                    ),
+                ),
+                ("last_error", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "product",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="details_request",
                         to="products.product",
                     ),
                 ),
@@ -59,6 +133,8 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="product",
-            index=models.Index(fields=["source", "fetched_at"], name="products_p_source__9006b7_idx"),
+            index=models.Index(
+                fields=["source", "fetched_at"], name="products_p_source__9006b7_idx"
+            ),
         ),
     ]

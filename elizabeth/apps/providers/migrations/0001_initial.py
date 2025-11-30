@@ -1,6 +1,6 @@
+import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 class Migration(migrations.Migration):
@@ -14,8 +14,21 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="ProviderAccount",
             fields=[
-                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
-                ("provider_name", models.CharField(choices=[("armtek", "Armtek")], default="armtek", max_length=64)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "provider_name",
+                    models.CharField(
+                        choices=[("armtek", "Armtek")], default="armtek", max_length=64
+                    ),
+                ),
                 ("login", models.CharField(max_length=255)),
                 ("encrypted_password", models.TextField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),

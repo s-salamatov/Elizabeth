@@ -1,4 +1,4 @@
-from apps.search.parsers import split_pin_and_brand, split_bulk_input
+from elizabeth.apps.search.parsers import split_bulk_input, split_pin_and_brand
 
 
 def test_split_pin_and_brand_handles_formats():

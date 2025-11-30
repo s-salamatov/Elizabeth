@@ -8,7 +8,7 @@ def main() -> None:
     base_dir = Path(__file__).resolve().parent / "elizabeth"
     if str(base_dir) not in sys.path:
         sys.path.insert(0, str(base_dir))
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "elizabeth.settings.dev")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev")
     from django.core.management import execute_from_command_line
 
     execute_from_command_line(sys.argv)

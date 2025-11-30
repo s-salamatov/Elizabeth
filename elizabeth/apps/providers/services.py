@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, Any
 
 from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.db import transaction
 
-from apps.providers.models import ProviderAccount, ProviderName
+from elizabeth.apps.providers.models import ProviderAccount, ProviderName
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User as DjangoUser  # runtime alias
+else:
+    DjangoUser = AbstractBaseUser
 
 
 @dataclass
@@ -24,7 +30,11 @@ class ArmtekCredentials:
 
 @transaction.atomic
 def save_provider_account(
-    *, user, provider_name: str, login: str, password: str
+    *,
+    user: Any,
+    provider_name: str,
+    login: str,
+    password: str,
 ) -> ProviderAccount:
     account, _created = ProviderAccount.objects.get_or_create(
         user=user, provider_name=provider_name
@@ -35,14 +45,18 @@ def save_provider_account(
     return account
 
 
-def get_provider_account(*, user, provider_name: str) -> Optional[ProviderAccount]:
+def get_provider_account(
+    *, user: Any, provider_name: str
+) -> Optional[ProviderAccount]:
     try:
         return ProviderAccount.objects.get(user=user, provider_name=provider_name)
     except ProviderAccount.DoesNotExist:
         return None
 
 
-def resolve_armtek_credentials(user=None) -> Optional[ArmtekCredentials]:
+def resolve_armtek_credentials(
+    user: Any | None = None,
+) -> Optional[ArmtekCredentials]:
     login = settings.ARMTEK_LOGIN
     password = settings.ARMTEK_PASSWORD
     pin = settings.ARMTEK_PIN

@@ -7,24 +7,24 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.products.models import Product
-from apps.products.serializers import (
+from elizabeth.apps.products.models import Product
+from elizabeth.apps.products.serializers import (
     ProductDetailsInputSerializer,
     ProductDetailsSerializer,
     ProductSerializer,
 )
-from apps.products.services import (
+from elizabeth.apps.products.services import (
     mark_requests_pending,
     update_product_details,
 )
 
 
-class ProductListView(ListAPIView):
+class ProductListView(ListAPIView[Product]):
     queryset = Product.objects.all().order_by("-created_at")
     serializer_class = ProductSerializer
 
 
-class ProductDetailView(RetrieveAPIView):
+class ProductDetailView(RetrieveAPIView[Product]):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
@@ -32,8 +32,10 @@ class ProductDetailView(RetrieveAPIView):
 class ProductDetailsIngestView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, pk: int, *args, **kwargs) -> Response:
-        token = request.headers.get("X-Details-Token") or request.query_params.get("request_id")
+    def post(self, request: Request, pk: int, *args: object, **kwargs: object) -> Response:
+        token = request.headers.get("X-Details-Token") or request.query_params.get(
+            "request_id"
+        )
         serializer = ProductDetailsInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -44,7 +46,10 @@ class ProductDetailsIngestView(APIView):
             )
         # Request correlation check (if provided we require match)
         if token:
-            if not getattr(product, "details_request", None) or str(product.details_request.request_id) != token:
+            if (
+                not getattr(product, "details_request", None)
+                or str(product.details_request.request_id) != token
+            ):
                 return Response(
                     {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
                 )
@@ -58,7 +63,7 @@ class ProductDetailsIngestView(APIView):
 class ProductDetailsRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request: Request, *args, **kwargs) -> Response:
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         product_ids = request.data.get("product_ids") or []
         if not isinstance(product_ids, list) or not product_ids:
             return Response(
@@ -85,7 +90,7 @@ class ProductDetailsRequestView(APIView):
 class ProductDetailsStatusView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request: Request, *args, **kwargs) -> Response:
+    def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         tokens = request.data.get("request_ids") or []
         if not isinstance(tokens, list) or not tokens:
             return Response(

@@ -35,6 +35,8 @@ def decrypt_secret(value: str) -> Optional[str]:
 
 
 class ProviderAccount(models.Model):
+    """Encrypted credentials for a data provider per user."""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -49,6 +51,8 @@ class ProviderAccount(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Unique provider per user."""
+
         verbose_name = "Provider account"
         verbose_name_plural = "Provider accounts"
         unique_together = ("user", "provider_name")

@@ -30,7 +30,7 @@ search_bp = Blueprint("search_api", __name__)
 
 
 def parse_query(query: str) -> tuple[str, str | None]:
-    """Parse user input into article and optional brand."""
+    """Parse user input into article and brand (brand обязательно)."""
     cleaned = query.strip()
     if not cleaned:
         raise ValueError("Введите артикул для поиска")
@@ -41,19 +41,19 @@ def parse_query(query: str) -> tuple[str, str | None]:
     if "_" in cleaned:
         left, right = cleaned.split("_", 1)
         article, brand = left.strip(), right.strip()
-    elif " " in cleaned:
-        left, right = cleaned.split(" ", 1)
-        article, brand = left.strip(), right.strip()
     else:
-        article = cleaned
+        raise ValueError(
+            "Используйте формат PIN_BRAND: артикул и бренд через подчёркивание"
+        )
 
     if not article:
         raise ValueError("Артикул не должен быть пустым")
 
+    if not brand:
+        raise ValueError("Укажите бренд через подчёркивание (формат PIN_BRAND)")
+
     if brand:
         brand = brand.upper()
-    else:
-        brand = None
 
     return article, brand
 

@@ -31,7 +31,7 @@
               <span class="text-uppercase fw-semibold text-primary">Поиск запчастей</span>
             </div>
             <h1 class="mb-0">Найдите запчасть по артикулу и бренду</h1>
-            <p class="muted-text mb-0" id="hint-text">Форматы: <span class="fw-semibold">332101_KYB</span>, <span class="fw-semibold">332101 KYB</span>, <span class="fw-semibold">332101</span>.</p>
+            <p class="muted-text mb-0" id="hint-text">Формат: <span class="fw-semibold">332101_KYB</span>. Бренд обязателен.</p>
           </div>
 
           <form id="search-form" class="d-flex flex-column gap-3" novalidate>
@@ -44,7 +44,7 @@
                     class="form-control single-line-textarea"
                     id="search-input"
                     rows="1"
-                    placeholder="332101_KYB, 332101 KYB, 332101"
+                    placeholder="332101_KYB"
                     aria-describedby="search-help"
                   ></textarea>
                   <button id="search-button" type="submit" class="btn btn-primary" aria-label="Запустить поиск">
@@ -60,8 +60,8 @@
                 </div>
               </div>
               <div class="d-flex align-items-center gap-2 mt-1 text-muted" id="search-help">
-                <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Введите артикул и бренд через пробел или подчёркивание."></i>
-                <small>Поддерживаются разделители: запятая, точка с запятой, точка, слеш, перевод строки, тире.</small>
+                <i class="bi bi-info-circle" data-bs-toggle="tooltip" data-bs-placement="right" title="Введите артикул и бренд через подчёркивание."></i>
+                  <small>Поддерживаются разделители: запятая, точка с запятой, точка, слеш, перевод строки. Бренд обязателен. Внутри позиции используйте только подчёркивание.</small>
               </div>
             </div>
           </form>

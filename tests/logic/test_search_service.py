@@ -131,6 +131,41 @@ def test_search_with_inequality_decimal():
     assert result[0].quantity_available == 100
 
 
+def test_search_with_trailing_inequality_decimal():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": {
+            "ARRAY": [
+                {
+                    "PIN": "123",
+                    "BRAND": "BMW",
+                    "NAME": "Part name",
+                    "ARTID": "A1",
+                    "PARNR": "S1",
+                    "KEYZAK": "K1",
+                    "RVALUE": "50>",
+                    "RETDAYS": "5",
+                    "RDPRF": "1",
+                    "MINBM": "2",
+                    "VENSL": "0.95",
+                    "PRICE": "100.5",
+                    "WAERS": "USD",
+                    "DLVDT": "20240101120000",
+                    "ANALOG": "0",
+                }
+            ]
+        },
+    }
+    service = SearchService(
+        DummyHttpClient({("post", "/api/ws_search/search"): response})
+    )
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert result[0].quantity_available == 50
+
+
 def test_search_with_grouping_separators():
     response = {
         "STATUS": 200,
@@ -166,6 +201,41 @@ def test_search_with_grouping_separators():
     assert result[0].quantity_available == 50000
 
 
+def test_search_with_textual_availability():
+    response = {
+        "STATUS": 200,
+        "MESSAGES": [],
+        "RESP": {
+            "ARRAY": [
+                {
+                    "PIN": "123",
+                    "BRAND": "BMW",
+                    "NAME": "Part name",
+                    "ARTID": "A1",
+                    "PARNR": "S1",
+                    "KEYZAK": "K1",
+                    "RVALUE": "ЕСТЬ",
+                    "RETDAYS": "5",
+                    "RDPRF": "1",
+                    "MINBM": "2",
+                    "VENSL": "0.95",
+                    "PRICE": "100.5",
+                    "WAERS": "USD",
+                    "DLVDT": "20240101120000",
+                    "ANALOG": "0",
+                }
+            ]
+        },
+    }
+    service = SearchService(
+        DummyHttpClient({("post", "/api/ws_search/search"): response})
+    )
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert result[0].quantity_available == 1
+
+
 def test_search_status_error():
     response = {"STATUS": 500, "MESSAGES": ["fail"], "RESP": {}}
     service = SearchService(
@@ -174,6 +244,17 @@ def test_search_status_error():
 
     with pytest.raises(ArmtekStatusError):
         service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+
+def test_search_missing_array_returns_empty_list():
+    response = {"STATUS": 200, "MESSAGES": [], "RESP": {}}
+    service = SearchService(
+        DummyHttpClient({("post", "/api/ws_search/search"): response})
+    )
+
+    result = service.search(vkorg="2000", kunnr_rg="3000", pin="PIN")
+
+    assert not result
 
 
 def test_search_format_error_missing_field():

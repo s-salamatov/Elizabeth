@@ -483,10 +483,14 @@ document.addEventListener("DOMContentLoaded", () => {
         row.data.artid
       )}?elizabeth_token=${row.data.elizabeth_token}`;
       window.open(url, "_blank");
-      const result = await waitForCharacteristics(row.data.elizabeth_token);
-      if (result.status === "ok") {
-        applyCharacteristics(row.data.elizabeth_token, result.data);
-      } else {
+      try {
+        const result = await waitForCharacteristics(row.data.elizabeth_token);
+        if (result.status === "ok") {
+          applyCharacteristics(row.data.elizabeth_token, result.data);
+        } else {
+          markFailed(row.data.elizabeth_token);
+        }
+      } catch (err) {
         markFailed(row.data.elizabeth_token);
       }
     }
@@ -509,39 +513,48 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const parseOmniInput = (text) => {
     const normalized = text.replace(/\r/g, "\n");
-    const parts = normalized.split(/[,\n;/.-]+/);
+    const parts = normalized.split(/[,\n;/.]+/);
     const queries = [];
+    const invalid = [];
 
     parts.forEach((raw) => {
       const chunk = raw.trim();
       if (!chunk) return;
 
+      const registerInvalid = (reason) =>
+        invalid.push({ value: chunk, reason });
+
       if (chunk.includes("_")) {
-        const [pin, brandPart] = chunk.split("_", 2);
-        queries.push({ pin: pin.trim(), brand: brandPart?.trim() || null });
+        const segments = chunk.split("_");
+        if (segments.length !== 2) {
+          registerInvalid("Используйте один разделитель '_' между артикулом и брендом");
+          return;
+        }
+        const [pin, brandPart] = segments;
+        if (!pin.trim() || !brandPart.trim()) {
+          registerInvalid("Артикул и бренд не должны быть пустыми");
+          return;
+        }
+        queries.push({ pin: pin.trim(), brand: brandPart.trim().toUpperCase() });
         return;
       }
 
       if (chunk.includes(" ")) {
-        const [pin, ...rest] = chunk.split(/\s+/);
-        const brand = rest.join(" ").trim();
-        queries.push({ pin: pin.trim(), brand: brand || null });
+        registerInvalid("Используйте '_' вместо пробела между артикулом и брендом");
         return;
       }
 
-      queries.push({ pin: chunk, brand: null });
+      registerInvalid("Добавьте бренд через подчёркивание");
     });
 
-    return queries
-      .filter((entry) => entry.pin)
-      .map((entry) => ({
-        pin: entry.pin,
-        brand: entry.brand ? entry.brand.toUpperCase() : null,
-      }));
+    return { queries, invalid };
   };
 
   const searchArmtek = async ({ pin, brand }) => {
-    const query = brand ? `${pin} ${brand}` : pin;
+    if (!brand) {
+      throw new Error("Бренд обязателен");
+    }
+    const query = `${pin}_${brand}`;
     const response = await fetch(backendUrl("/api/armtek/search"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -558,17 +571,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const handleSearch = async (event) => {
     event.preventDefault();
-    const queries = parseOmniInput(input.value || "");
+    const { queries, invalid } = parseOmniInput(input.value || "");
     if (!queries.length) {
-      showError("Введите хотя бы один артикул в omni-box", "warning");
+      const msg =
+        invalid.length > 0
+          ? `Исправьте формат: ${invalid
+              .slice(0, 3)
+              .map((it) => `${it.value} (${it.reason})`)
+              .join("; ")}`
+          : "Введите хотя бы один артикул в omni-box";
+      showError(msg, "warning");
       setHint(
-        'Форматы: <strong>332101_KYB</strong>, <strong>332101 KYB</strong>, <strong>332101</strong>. Разделители: запятая, точка, точка с запятой, слеш, тире, новая строка.'
+        'Формат: <strong>PIN_BRAND</strong>, например <strong>332101_KYB</strong>. Разделители между позициями: запятая, точка, точка с запятой, слеш, новая строка. Бренд обязателен.'
       );
       return;
     }
 
     clearError();
-    setHint("Ищем позиции по списку. Добавьте бренд для повышения точности.");
+    if (invalid.length) {
+      showError(
+        `Некоторые строки пропущены: ${invalid
+          .slice(0, 3)
+          .map((it) => `${it.value} (${it.reason})`)
+          .join("; ")}`,
+        "warning"
+      );
+    }
+    setHint("Ищем позиции по списку. Убедитесь, что у каждой строки указан бренд.");
     clearAllPolls();
     rows = [];
     hasCompletedParsingCycle = false;

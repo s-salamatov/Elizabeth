@@ -48,8 +48,8 @@ class DummyArmtekService:
     "query,expected",
     [
         ("332101_KYB", ("332101", "KYB")),
-        ("  332101 KYB  ", ("332101", "KYB")),
-        ("ABC123", ("ABC123", None)),
+        (" 332101_KYB ", ("332101", "KYB")),
+        ("85-00935-SX_STELLOX", ("85-00935-SX", "STELLOX")),
     ],
 )
 def test_parse_query(query, expected):
@@ -59,6 +59,13 @@ def test_parse_query(query, expected):
 def test_parse_query_empty_raises():
     with pytest.raises(ValueError):
         parse_query("   ")
+
+
+def test_parse_query_requires_brand():
+    with pytest.raises(ValueError):
+        parse_query("ABC123")
+    with pytest.raises(ValueError):
+        parse_query("332101 KYB")
 
 
 def test_health_endpoint():
@@ -89,7 +96,7 @@ def test_api_search_success_returns_tokens_and_registers_pending_repo():
     app = create_app(armtek_service=service, characteristics_repository=repo)
     client = app.test_client()
 
-    response = client.post("/api/armtek/search", json={"query": "332101 KYB"})
+    response = client.post("/api/armtek/search", json={"query": "332101_KYB"})
 
     assert response.status_code == 200
     data = response.get_json()
@@ -110,10 +117,24 @@ def test_api_search_handles_armtek_error():
     app = create_app(armtek_service=service)
     client = app.test_client()
 
-    response = client.post("/api/armtek/search", json={"query": "332101"})
+    response = client.post("/api/armtek/search", json={"query": "332101_KYB"})
 
     assert response.status_code == 500
     assert response.get_json()["error"]
+
+
+def test_api_search_requires_brand():
+    service = DummyArmtekService()
+    app = create_app(armtek_service=service)
+    client = app.test_client()
+
+    response = client.post("/api/armtek/search", json={"query": "332101"})
+
+    assert response.status_code == 400
+    assert "бренд" in response.get_json()["error"].lower()
+
+    response2 = client.post("/api/armtek/search", json={"query": "332101KYB"})
+    assert response2.status_code == 400
 
 
 def test_api_search_skips_analogs():
@@ -124,7 +145,7 @@ def test_api_search_skips_analogs():
     app = create_app(armtek_service=service, characteristics_repository=repo)
     client = app.test_client()
 
-    response = client.post("/api/armtek/search", json={"query": "P B"})
+    response = client.post("/api/armtek/search", json={"query": "P_B"})
 
     assert response.status_code == 200
     data = response.get_json()

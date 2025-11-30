@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Iterable, Mapping, Sequence
@@ -66,10 +67,22 @@ def parse_datetime_value(value: Any) -> datetime | None:
 
 def parse_decimal_value(value: Any) -> Decimal:
     text = str(value).strip()
-    if text and text[0] in {">", "<"}:
-        text = text[1:].strip()
+    # Armtek может присылать числа с нестрогими сравнениями вроде
+    # ">50", "50>", ">= 50" — убираем граничные символы сравнения.
+    text = text.strip("<>=")
     # Remove grouping separators
     text = text.replace(" ", "").replace(",", "")
+    # Пробуем интерпретировать текстовые маркеры наличия
+    normalized = text.lower()
+    availability_tokens = {"есть", "yes", "да", "in stock", "available"}
+    none_tokens = {"нет", "no", "n/a", "na"}
+    if normalized in availability_tokens:
+        return Decimal(1)
+    if normalized in none_tokens:
+        return Decimal(0)
+    # Если остались буквы/другие символы — это не число
+    if re.search(r"[a-zа-я]", normalized, re.IGNORECASE):
+        raise ArmtekResponseFormatError(f"Invalid decimal value: {value}")
     try:
         return Decimal(text)
     except Exception as exc:

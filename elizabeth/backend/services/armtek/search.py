@@ -50,7 +50,16 @@ class SearchService:
 
         raw = self._http.post("/api/ws_search/search", data=params)
         resp = unwrap_resp(raw)
-        array = extract_array(resp, "ARRAY")
+        try:
+            array = extract_array(resp, "ARRAY")
+        except ArmtekResponseFormatError:
+            # Armtek иногда возвращает пустой RESP без массива,
+            # когда по запросу ничего не найдено. В этом случае
+            # интерпретируем ответ как отсутствие результатов,
+            # а не как ошибку формата.
+            if "ARRAY" not in resp:
+                return []
+            raise
         items: List[SearchItem] = []
         for entry in array:
             mapping = ensure_mapping("RESP.ARRAY item", entry)

@@ -36,9 +36,15 @@ def is_product_fresh(product: Product) -> bool:
 
 
 def upsert_product_from_search(
-    item: SearchItemLike, *, source: str = "armtek"
+    item: SearchItemLike,
+    *,
+    source: str = "armtek",
+    user: Any,
+    search_request: Any,
 ) -> Product:
     defaults = {
+        "user": user,
+        "search_request": search_request,
         "brand": item.brand,
         "pin": item.pin,
         "oem": getattr(item, "oem", "") or "",
@@ -48,7 +54,7 @@ def upsert_product_from_search(
     }
     product, created = Product.objects.get_or_create(
         artid=item.artid,
-        source=source,
+        search_request=search_request,
         defaults=defaults,
     )
     if not created:
@@ -67,11 +73,19 @@ def upsert_product_from_search(
 
 
 def upsert_products_from_search(
-    items: Iterable[SearchItemLike], *, source: str = "armtek"
+    items: Iterable[SearchItemLike],
+    *,
+    source: str = "armtek",
+    user: Any,
+    search_request: Any,
 ) -> list[Product]:
     products: list[Product] = []
     for item in items:
-        products.append(upsert_product_from_search(item, source=source))
+        products.append(
+            upsert_product_from_search(
+                item, source=source, user=user, search_request=search_request
+            )
+        )
     return products
 
 

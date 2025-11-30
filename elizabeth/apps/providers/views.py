@@ -7,20 +7,28 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from elizabeth.apps.products.serializers import ProductSerializer
-from elizabeth.apps.products.services import upsert_products_from_search
 from elizabeth.apps.providers.armtek.exceptions import (
     ArmtekCredentialsError,
     ArmtekError,
 )
-from elizabeth.apps.providers.armtek.services import ArmtekSearchService
 from elizabeth.apps.providers.serializers import (
     ArmtekCredentialsSerializer,
     ArmtekSearchInputSerializer,
+    ProviderAccountSerializer,
 )
 from elizabeth.apps.providers.services import (
     resolve_armtek_credentials,
     save_provider_account,
 )
+from elizabeth.apps.search.services import perform_single_search
+
+
+class ProviderAccountListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        accounts = request.user.provider_accounts.all()
+        return Response(ProviderAccountSerializer(accounts, many=True).data)
 
 
 class ArmtekSearchProxyView(APIView):
@@ -30,20 +38,25 @@ class ArmtekSearchProxyView(APIView):
         serializer = ArmtekSearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        credentials = resolve_armtek_credentials(request.user)
-        service = ArmtekSearchService(credentials)
-
         try:
-            items = service.search(
-                pin=serializer.validated_data["pin"],
-                brand=serializer.validated_data.get("brand"),
+            search_request, products = perform_single_search(
+                serializer.validated_data.get("query")
+                or " ".join(
+                    part
+                    for part in [
+                        serializer.validated_data.get("pin"),
+                        serializer.validated_data.get("brand"),
+                    ]
+                    if part
+                ).strip(),
+                user=request.user,
+                source="armtek",
             )
         except ArmtekCredentialsError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except ArmtekError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
 
-        products = upsert_products_from_search(items, source="armtek")
         return Response(ProductSerializer(products, many=True).data)
 
 
@@ -77,4 +90,8 @@ class ArmtekCredentialsView(APIView):
             login=data["login"],
             password=data["password"],
         )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request: Request, *args: object, **kwargs: object) -> Response:
+        request.user.provider_accounts.filter(provider_name="armtek").delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

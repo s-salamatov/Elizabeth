@@ -4,6 +4,7 @@ from typing import Any
 
 from rest_framework import serializers
 
+from elizabeth.apps.providers.models import ProviderAccount
 from elizabeth.apps.search.parsers import split_pin_and_brand
 
 
@@ -51,3 +52,17 @@ class ArmtekCredentialsSerializer(serializers.Serializer[dict[str, Any]]):
     vbeln: serializers.CharField = serializers.CharField(
         required=False, allow_blank=True
     )
+
+
+class ProviderAccountSerializer(serializers.ModelSerializer[ProviderAccount]):
+    class Meta:
+        """Expose provider account fields."""
+
+        model = ProviderAccount
+        fields = [
+            "id",
+            "provider_name",
+            "login",
+            "created_at",
+            "updated_at",
+        ]

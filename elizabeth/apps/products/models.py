@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.db import models
 
 
@@ -14,6 +15,20 @@ class DetailsRequestStatus(models.TextChoices):
 class Product(models.Model):
     """Stored product search result."""
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="products",
+        null=True,
+        blank=True,
+    )
+    search_request = models.ForeignKey(
+        "search.SearchRequest",
+        on_delete=models.CASCADE,
+        related_name="products",
+        null=True,
+        blank=True,
+    )
     artid = models.CharField(max_length=64)
     brand = models.CharField(max_length=128)
     pin = models.CharField(max_length=128)
@@ -27,8 +42,10 @@ class Product(models.Model):
     class Meta:
         """Uniqueness and indexes for product table."""
 
-        unique_together = ("artid", "source")
+        unique_together = ("search_request", "artid")
         indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["search_request"]),
             models.Index(fields=["pin"]),
             models.Index(fields=["brand"]),
             models.Index(fields=["source", "fetched_at"]),

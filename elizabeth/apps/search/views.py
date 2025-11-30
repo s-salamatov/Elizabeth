@@ -6,11 +6,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from elizabeth.apps.products.models import Product
 from elizabeth.apps.products.serializers import ProductSerializer
 from elizabeth.apps.providers.armtek.exceptions import (
     ArmtekCredentialsError,
     ArmtekError,
 )
+from elizabeth.apps.search.models import SearchRequest
 from elizabeth.apps.search.serializers import (
     BulkSearchSerializer,
     SearchInputSerializer,
@@ -73,4 +75,27 @@ class BulkSearchView(APIView):
                 "products": ProductSerializer(products, many=True).data,
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class SearchDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(
+        self, request: Request, pk: int, *args: object, **kwargs: object
+    ) -> Response:
+        try:
+            search_request = SearchRequest.objects.get(pk=pk, user=request.user)
+        except SearchRequest.DoesNotExist:
+            return Response(
+                {"detail": "Search request not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        products = Product.objects.filter(search_request=search_request)
+        return Response(
+            {
+                "request": SearchRequestSerializer(search_request).data,
+                "products": ProductSerializer(products, many=True).data,
+            }
         )

@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Any
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from elizabeth.apps.accounts.models import UserSettings
+
 User = get_user_model()
 if TYPE_CHECKING:  # pragma: no cover - typing only
     from django.contrib.auth.models import AbstractBaseUser as UserModel
@@ -20,6 +22,23 @@ class UserSerializer(serializers.ModelSerializer[UserModel]):
 
         model = User
         fields = ["id", "username", "email"]
+
+
+class UserSettingsSerializer(serializers.ModelSerializer[UserSettings]):
+    class Meta:
+        """Settings fields exposed to the API."""
+
+        model = UserSettings
+        fields = ["default_search_source", "created_at", "updated_at"]
+        read_only_fields = ["created_at", "updated_at"]
+
+
+class UserUpdateSerializer(serializers.ModelSerializer[UserModel]):
+    class Meta:
+        """Mutable user profile fields."""
+
+        model = User
+        fields = ["email"]
 
 
 class RegisterSerializer(serializers.Serializer[dict[str, object]]):

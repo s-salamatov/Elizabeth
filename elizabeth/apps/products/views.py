@@ -21,13 +21,23 @@ from elizabeth.apps.products.services import (
 
 
 class ProductListView(ListAPIView[Product]):
-    queryset = Product.objects.all().order_by("-created_at")
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
+
+    def get_queryset(self):  # type: ignore[override]
+        qs = Product.objects.filter(user=self.request.user).order_by("-created_at")
+        search_request_id = self.request.query_params.get("search_request_id")
+        if search_request_id:
+            qs = qs.filter(search_request_id=search_request_id)
+        return qs
 
 
 class ProductDetailView(RetrieveAPIView[Product]):
-    queryset = Product.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
+
+    def get_queryset(self):  # type: ignore[override]
+        return Product.objects.filter(user=self.request.user)
 
 
 class ProductDetailsIngestView(APIView):
@@ -47,15 +57,19 @@ class ProductDetailsIngestView(APIView):
             return Response(
                 {"detail": "Product not found"}, status=status.HTTP_404_NOT_FOUND
             )
+        if not token:
+            return Response(
+                {"detail": "request_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # Request correlation check (if provided we require match)
-        if token:
-            if (
-                not getattr(product, "details_request", None)
-                or str(product.details_request.request_id) != token
-            ):
-                return Response(
-                    {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
-                )
+        if (
+            not getattr(product, "details_request", None)
+            or str(product.details_request.request_id) != token
+        ):
+            return Response(
+                {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
+            )
         details = update_product_details(product, data=serializer.validated_data)
         return Response(
             ProductDetailsSerializer(details).data,
@@ -73,7 +87,9 @@ class ProductDetailsRequestView(APIView):
                 {"detail": "Provide product_ids array"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        products = list(Product.objects.filter(id__in=product_ids))
+        products = list(
+            Product.objects.filter(id__in=product_ids, user=request.user)
+        )
         if not products:
             return Response(
                 {"detail": "No products found"}, status=status.HTTP_404_NOT_FOUND
@@ -123,7 +139,9 @@ class ProductDetailsJobsView(APIView):
             limit = 20
 
         pending = (
-            Product.objects.filter(details_request__status="pending")
+            Product.objects.filter(
+                details_request__status="pending", user=request.user
+            )
             .select_related("details_request")
             .order_by("-details_request__created_at")[:limit]
         )

@@ -3,11 +3,13 @@ from __future__ import annotations
 import re
 from typing import List, Optional, Tuple
 
-SEPARATORS_PATTERN = re.compile(r"[\n,;]+")
+SEPARATORS_PATTERN = re.compile(r"[\n,;./]+", re.MULTILINE)
 
 
 def split_bulk_input(raw: str) -> List[str]:
-    parts = SEPARATORS_PATTERN.split(raw)
+    cleaned = raw.replace("\r", "\n")
+    cleaned = re.sub(r"\s*-\s*", "\n", cleaned)
+    parts = SEPARATORS_PATTERN.split(cleaned)
     return [part.strip() for part in parts if part.strip()]
 
 

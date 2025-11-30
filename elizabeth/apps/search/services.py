@@ -16,7 +16,7 @@ from elizabeth.apps.search.parsers import split_bulk_input, split_pin_and_brand
 def perform_single_search(
     query: str,
     *,
-    user: Any = None,
+    user: Any,
     source: str = "armtek",
 ) -> Tuple[SearchRequest, list[Product]]:
     search_request = SearchRequest.objects.create(
@@ -26,7 +26,9 @@ def perform_single_search(
         status=SearchStatus.IN_PROGRESS,
     )
     try:
-        products = _run_search_flow([query], user=user, source=source)
+        products = _run_search_flow(
+            [query], user=user, source=source, search_request=search_request
+        )
     except Exception:
         search_request.status = SearchStatus.FAILED
         search_request.save(update_fields=["status", "updated_at"])
@@ -41,7 +43,7 @@ def perform_single_search(
 def perform_bulk_search(
     queries: Iterable[str],
     *,
-    user: Any = None,
+    user: Any,
     source: str = "armtek",
 ) -> Tuple[SearchRequest, list[Product]]:
     normalized = [q for q in queries if q]
@@ -53,7 +55,9 @@ def perform_bulk_search(
         status=SearchStatus.IN_PROGRESS,
     )
     try:
-        products = _run_search_flow(normalized, user=user, source=source)
+        products = _run_search_flow(
+            normalized, user=user, source=source, search_request=search_request
+        )
     except Exception:
         search_request.status = SearchStatus.FAILED
         search_request.save(update_fields=["status", "updated_at"])
@@ -70,6 +74,7 @@ def _run_search_flow(
     *,
     user: Any,
     source: str,
+    search_request: SearchRequest,
 ) -> List[Product]:
     if source != "armtek":
         return []
@@ -80,12 +85,15 @@ def _run_search_flow(
     for query in queries:
         pin, brand = split_pin_and_brand(query)
         items = service.search(pin=pin, brand=brand)
-        products.extend(upsert_products_from_search(items, source=source))
-    # Deduplicate by PK
-    unique_products: dict[int, Product] = {
-        p.pk: p for p in products if p.pk is not None
-    }
-    return list(unique_products.values())
+        products.extend(
+            upsert_products_from_search(
+                items,
+                source=source,
+                user=user,
+                search_request=search_request,
+            )
+        )
+    return products
 
 
 def parse_bulk_payload(data: dict[str, Any]) -> List[str]:

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import Any, List, cast
+
 from django.conf import settings
+from django.db.models import QuerySet
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -21,13 +24,32 @@ from elizabeth.apps.products.services import (
 
 
 class ProductListView(ListAPIView[Product]):
-    queryset = Product.objects.all().order_by("-created_at")
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
+
+    def get_queryset(self) -> QuerySet[Product]:
+        assert self.request.user.is_authenticated
+        user = cast(Any, self.request.user)
+        qs = Product.objects.filter(user=user).order_by("-created_at")
+        search_request_id_raw = self.request.query_params.get("search_request_id")
+        if search_request_id_raw:
+            try:
+                search_request_id = int(search_request_id_raw)
+            except (TypeError, ValueError):
+                search_request_id = None
+            if search_request_id is not None:
+                qs = qs.filter(search_request_id=search_request_id)
+        return qs
 
 
 class ProductDetailView(RetrieveAPIView[Product]):
-    queryset = Product.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = ProductSerializer
+
+    def get_queryset(self) -> QuerySet[Product]:
+        assert self.request.user.is_authenticated
+        user = cast(Any, self.request.user)
+        return Product.objects.filter(user=user)
 
 
 class ProductDetailsIngestView(APIView):
@@ -47,15 +69,19 @@ class ProductDetailsIngestView(APIView):
             return Response(
                 {"detail": "Product not found"}, status=status.HTTP_404_NOT_FOUND
             )
+        if not token:
+            return Response(
+                {"detail": "request_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         # Request correlation check (if provided we require match)
-        if token:
-            if (
-                not getattr(product, "details_request", None)
-                or str(product.details_request.request_id) != token
-            ):
-                return Response(
-                    {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
-                )
+        if (
+            not getattr(product, "details_request", None)
+            or str(product.details_request.request_id) != token
+        ):
+            return Response(
+                {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
+            )
         details = update_product_details(product, data=serializer.validated_data)
         return Response(
             ProductDetailsSerializer(details).data,
@@ -67,13 +93,17 @@ class ProductDetailsRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         product_ids = request.data.get("product_ids") or []
         if not isinstance(product_ids, list) or not product_ids:
             return Response(
                 {"detail": "Provide product_ids array"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        products = list(Product.objects.filter(id__in=product_ids))
+        products: List[Product] = list(
+            Product.objects.filter(id__in=product_ids, user=user)
+        )
         if not products:
             return Response(
                 {"detail": "No products found"}, status=status.HTTP_404_NOT_FOUND
@@ -116,6 +146,8 @@ class ProductDetailsJobsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         limit_raw = request.query_params.get("limit") or "20"
         try:
             limit = max(1, min(int(limit_raw), 200))
@@ -123,7 +155,7 @@ class ProductDetailsJobsView(APIView):
             limit = 20
 
         pending = (
-            Product.objects.filter(details_request__status="pending")
+            Product.objects.filter(details_request__status="pending", user=user)
             .select_related("details_request")
             .order_by("-details_request__created_at")[:limit]
         )

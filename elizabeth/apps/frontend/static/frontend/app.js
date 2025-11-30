@@ -6,9 +6,13 @@
   const els = {
     username: document.getElementById('username'),
     password: document.getElementById('password'),
+    email: document.getElementById('email'),
+    defaultSource: document.getElementById('default-source'),
     loginBtn: document.getElementById('login-btn'),
     registerBtn: document.getElementById('register-btn'),
     authStatus: document.getElementById('auth-status'),
+    profileStatus: document.getElementById('profile-status'),
+    profileSave: document.getElementById('profile-save-btn'),
     singleQuery: document.getElementById('single-query'),
     singleSearch: document.getElementById('single-search-btn'),
     bulkInput: document.getElementById('bulk-input'),
@@ -21,6 +25,7 @@
     credsLogin: null,
     credsPassword: null,
     credsBtn: null,
+    armtekStatus: null,
   };
 
   function ensureCredentialInputs() {
@@ -37,14 +42,20 @@
     const saveBtn = document.createElement('button');
     saveBtn.textContent = 'Save Armtek credentials';
     saveBtn.classList.add('secondary');
+    const status = document.createElement('div');
+    status.id = 'armtek-status';
+    status.className = 'toast';
+    status.style.display = 'none';
     card.appendChild(loginLabel);
     card.appendChild(loginInput);
     card.appendChild(passwordLabel);
     card.appendChild(passwordInput);
     card.appendChild(saveBtn);
+    card.appendChild(status);
     els.credsLogin = loginInput;
     els.credsPassword = passwordInput;
     els.credsBtn = saveBtn;
+    els.armtekStatus = status;
     saveBtn.onclick = saveCredentials;
   }
 
@@ -57,6 +68,19 @@
     els.authStatus.textContent = msg;
     els.authStatus.classList.toggle('error', isError);
     els.authStatus.style.display = 'block';
+  }
+
+  function setProfileStatus(msg, isError = false) {
+    els.profileStatus.textContent = msg;
+    els.profileStatus.classList.toggle('error', isError);
+    els.profileStatus.style.display = 'block';
+  }
+
+  function setArmtekStatus(msg, isError = false) {
+    if (!els.armtekStatus) return;
+    els.armtekStatus.textContent = msg;
+    els.armtekStatus.classList.toggle('error', isError);
+    els.armtekStatus.style.display = 'block';
   }
 
   async function auth(endpoint) {
@@ -82,8 +106,51 @@
       refreshToken = data.tokens?.refresh;
       setAuthStatus('Token issued. You can search now.');
       els.searchStatus.textContent = 'Authenticated. Ready to search…';
+      fetchProfile();
+      loadCredentials();
     } catch (err) {
       setAuthStatus(err.message, true);
+    }
+  }
+
+  async function fetchProfile() {
+    if (!accessToken) return;
+    try {
+      const resp = await fetch(`${apiBase}/auth/me`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || 'Failed to load profile');
+      els.email.value = data.user?.email || '';
+      els.defaultSource.value = data.settings?.default_search_source || 'armtek';
+      setProfileStatus('Profile loaded');
+    } catch (err) {
+      setProfileStatus(err.message, true);
+    }
+  }
+
+  async function saveProfile() {
+    if (!accessToken) {
+      setProfileStatus('Authorize first', true);
+      return;
+    }
+    try {
+      const resp = await fetch(`${apiBase}/auth/me`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          email: els.email.value,
+          default_search_source: els.defaultSource.value || 'armtek',
+        }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.detail || 'Profile save failed');
+      setProfileStatus('Profile updated');
+    } catch (err) {
+      setProfileStatus(err.message, true);
     }
   }
 
@@ -110,9 +177,26 @@
         body: JSON.stringify(payload),
       });
       if (!resp.ok) throw new Error('Saving credentials failed');
-      setAuthStatus('Armtek credentials saved');
+      setArmtekStatus('Armtek credentials saved');
     } catch (err) {
-      setAuthStatus(err.message, true);
+      setArmtekStatus(err.message, true);
+    }
+  }
+
+  async function loadCredentials() {
+    if (!accessToken) return;
+    try {
+      const resp = await fetch(`${apiBase}/providers/armtek/credentials`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (resp.status === 204) return;
+      const data = await resp.json();
+      if (data.login) {
+        els.credsLogin.value = data.login;
+        setArmtekStatus('Loaded Armtek credentials');
+      }
+    } catch (err) {
+      setArmtekStatus(err.message, true);
     }
   }
 
@@ -134,6 +218,7 @@
       els.searchStatus.textContent = 'Type a query first.';
       return;
     }
+    payload.source = els.defaultSource.value || 'armtek';
     try {
       const resp = await fetch(url, {
         method: 'POST',
@@ -279,6 +364,7 @@
   // Event listeners
   els.loginBtn.addEventListener('click', () => auth('login'));
   els.registerBtn.addEventListener('click', () => auth('register'));
+  els.profileSave.addEventListener('click', saveProfile);
   els.singleSearch.addEventListener('click', () => runSearch(false));
   els.bulkSearch.addEventListener('click', () => runSearch(true));
   bindFileInput();

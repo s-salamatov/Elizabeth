@@ -1,15 +1,20 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from elizabeth.apps.accounts.models import UserSettings
 from elizabeth.apps.accounts.serializers import (
     LoginSerializer,
     RegisterSerializer,
     UserSerializer,
+    UserSettingsSerializer,
+    UserUpdateSerializer,
 )
 from elizabeth.apps.accounts.services import authenticate_user, register_user
 
@@ -47,5 +52,39 @@ class LoginView(APIView):
             {
                 "user": UserSerializer(user).data,
                 "tokens": {"access": tokens.access, "refresh": tokens.refresh},
+            }
+        )
+
+
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        settings_obj, _ = UserSettings.objects.get_or_create(user=user)
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "settings": UserSettingsSerializer(settings_obj).data,
+            }
+        )
+
+    def patch(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        settings_obj, _ = UserSettings.objects.get_or_create(user=user)
+        user_serializer = UserUpdateSerializer(user, data=request.data, partial=True)
+        settings_serializer = UserSettingsSerializer(
+            settings_obj, data=request.data, partial=True
+        )
+        user_serializer.is_valid(raise_exception=True)
+        settings_serializer.is_valid(raise_exception=True)
+        user_serializer.save()
+        settings_serializer.save()
+        return Response(
+            {
+                "user": UserSerializer(user).data,
+                "settings": UserSettingsSerializer(settings_obj).data,
             }
         )

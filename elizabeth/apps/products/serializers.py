@@ -55,6 +55,7 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
     details = ProductDetailsSerializer(read_only=True)
     details_status = serializers.SerializerMethodField()
     request_id = serializers.SerializerMethodField()
+    search_request_id = serializers.IntegerField(read_only=True)
 
     class Meta:
         """Product read serializer with relations."""
@@ -62,6 +63,7 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
         model = Product
         fields = [
             "id",
+            "search_request_id",
             "artid",
             "brand",
             "pin",

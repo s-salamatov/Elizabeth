@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
@@ -7,43 +9,60 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from elizabeth.apps.products.serializers import ProductSerializer
-from elizabeth.apps.products.services import upsert_products_from_search
 from elizabeth.apps.providers.armtek.exceptions import (
     ArmtekCredentialsError,
     ArmtekError,
 )
-from elizabeth.apps.providers.armtek.services import ArmtekSearchService
 from elizabeth.apps.providers.serializers import (
     ArmtekCredentialsSerializer,
     ArmtekSearchInputSerializer,
+    ProviderAccountSerializer,
 )
 from elizabeth.apps.providers.services import (
     resolve_armtek_credentials,
     save_provider_account,
 )
+from elizabeth.apps.search.services import perform_single_search
+
+
+class ProviderAccountListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        accounts = user.provider_accounts.all()
+        return Response(ProviderAccountSerializer(accounts, many=True).data)
 
 
 class ArmtekSearchProxyView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         serializer = ArmtekSearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        credentials = resolve_armtek_credentials(request.user)
-        service = ArmtekSearchService(credentials)
-
         try:
-            items = service.search(
-                pin=serializer.validated_data["pin"],
-                brand=serializer.validated_data.get("brand"),
+            search_request, products = perform_single_search(
+                serializer.validated_data.get("query")
+                or " ".join(
+                    part
+                    for part in [
+                        serializer.validated_data.get("pin"),
+                        serializer.validated_data.get("brand"),
+                    ]
+                    if part
+                ).strip(),
+                user=user,
+                source="armtek",
             )
         except ArmtekCredentialsError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except ArmtekError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
 
-        products = upsert_products_from_search(items, source="armtek")
         return Response(ProductSerializer(products, many=True).data)
 
 
@@ -51,7 +70,9 @@ class ArmtekCredentialsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request, *args: object, **kwargs: object) -> Response:
-        credentials = resolve_armtek_credentials(request.user)
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        credentials = resolve_armtek_credentials(user)
         if credentials is None:
             return Response({}, status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -68,13 +89,21 @@ class ArmtekCredentialsView(APIView):
         )
 
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
         serializer = ArmtekCredentialsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         save_provider_account(
-            user=request.user,
+            user=user,
             provider_name="armtek",
             login=data["login"],
             password=data["password"],
         )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def delete(self, request: Request, *args: object, **kwargs: object) -> Response:
+        assert request.user.is_authenticated
+        user = cast(Any, request.user)
+        user.provider_accounts.filter(provider_name="armtek").delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

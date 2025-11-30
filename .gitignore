@@ -19,4 +19,4 @@ venv/
 
 # Environment files
 .env
-data/armtek_session.json
+db.sqlite3

@@ -17,9 +17,7 @@ def main() -> None:
         sys.path.insert(0, str(REPO_ROOT))
     from elizabeth.manage import main as django_main  # import after sys.path tweak
 
-    os.environ.setdefault(
-        "DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev"
-    )
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev")
     if len(sys.argv) == 1:
         sys.argv.extend(["runserver", "0.0.0.0:8000"])
     django_main()

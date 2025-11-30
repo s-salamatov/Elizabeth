@@ -9,16 +9,17 @@ import os
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent / "elizabeth"
+REPO_ROOT = Path(__file__).resolve().parent
 
 
 def main() -> None:
-    if str(BASE_DIR) not in sys.path:
-        sys.path.insert(0, str(BASE_DIR))
+    if str(REPO_ROOT) not in sys.path:
+        sys.path.insert(0, str(REPO_ROOT))
     from elizabeth.manage import main as django_main  # import after sys.path tweak
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev")
-    # Default to ``runserver`` if no arguments are provided.
+    os.environ.setdefault(
+        "DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev"
+    )
     if len(sys.argv) == 1:
         sys.argv.extend(["runserver", "0.0.0.0:8000"])
     django_main()

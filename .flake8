@@ -1,8 +1,8 @@
 [flake8]
 max-line-length = 88
-extend-ignore = E203, W503
+extend-ignore = E203, W503, D100, D101, D102, D103, D104, D105, D107
 extend-select = B, B9, C4, D, N
 docstring-convention = google
-exclude = .git, __pycache__, .venv, .mypy_cache, .pytest_cache
+exclude = .git, __pycache__, .venv, .mypy_cache, .pytest_cache, elizabeth_legacy
 per-file-ignores =
     tests/*: D

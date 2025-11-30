@@ -3,6 +3,7 @@ from __future__ import annotations
 from rest_framework import status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -31,7 +32,7 @@ class ProductDetailView(RetrieveAPIView):
 class ProductDetailsIngestView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, pk: int, *args, **kwargs):
+    def post(self, request: Request, pk: int, *args, **kwargs) -> Response:
         token = request.headers.get("X-Details-Token") or request.query_params.get("request_id")
         serializer = ProductDetailsInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -57,7 +58,7 @@ class ProductDetailsIngestView(APIView):
 class ProductDetailsRequestView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         product_ids = request.data.get("product_ids") or []
         if not isinstance(product_ids, list) or not product_ids:
             return Response(
@@ -84,7 +85,7 @@ class ProductDetailsRequestView(APIView):
 class ProductDetailsStatusView(APIView):
     permission_classes = [AllowAny]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         tokens = request.data.get("request_ids") or []
         if not isinstance(tokens, list) or not tokens:
             return Response(

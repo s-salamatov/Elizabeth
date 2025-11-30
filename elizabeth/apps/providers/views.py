@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,7 +17,7 @@ from apps.providers.services import resolve_armtek_credentials
 class ArmtekSearchProxyView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         serializer = ArmtekSearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

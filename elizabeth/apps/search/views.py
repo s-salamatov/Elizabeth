@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -18,7 +19,7 @@ from apps.search.services import parse_bulk_payload, perform_bulk_search, perfor
 class SearchView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         serializer = SearchInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -44,7 +45,7 @@ class SearchView(APIView):
 class BulkSearchView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: Request, *args, **kwargs) -> Response:
         serializer = BulkSearchSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         queries = parse_bulk_payload(serializer.validated_data)

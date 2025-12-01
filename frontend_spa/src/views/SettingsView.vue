@@ -1,36 +1,24 @@
 <template>
   <MainLayout>
-    <div class="row g-3">
-      <div class="col-12">
-        <div class="hero-intro d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <h2 class="mb-1">Настройки</h2>
-            <p class="text-muted mb-0">Управляйте профилем и поставщиками данных. Все API-запросы идут по /api/v1.</p>
-          </div>
-          <span class="badge bg-primary">Подсказки встроены прямо в формы</span>
+    <div class="page-header">
+      <h1>Настройки</h1>
+      <p class="text-muted">Управляйте профилем, темой и учётными данными поставщиков. Все API-запросы идут по /api/v1.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header bg-transparent">
+        <div class="nav nav-pills gap-2">
+          <button class="btn btn-ghost" :class="{ active: activeTab === 'profile' }" @click="activeTab = 'profile'">
+            <i class="bi bi-person-gear me-1"></i> Профиль
+          </button>
+          <button class="btn btn-ghost" :class="{ active: activeTab === 'providers' }" @click="activeTab = 'providers'">
+            <i class="bi bi-diagram-3 me-1"></i> Провайдеры
+          </button>
         </div>
       </div>
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <ul class="nav nav-pills card-header-pills">
-              <li class="nav-item">
-                <button class="nav-link" :class="{ active: activeTab === 'profile' }" @click="activeTab = 'profile'">
-                  Профиль
-                </button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" :class="{ active: activeTab === 'providers' }" @click="activeTab = 'providers'">
-                  Провайдеры
-                </button>
-              </li>
-            </ul>
-          </div>
-          <div class="card-body">
-            <ProfileSettings v-if="activeTab === 'profile'" />
-            <ProviderSettings v-else />
-          </div>
-        </div>
+      <div class="card-body">
+        <ProfileSettings v-if="activeTab === 'profile'" />
+        <ProviderSettings v-else />
       </div>
     </div>
   </MainLayout>

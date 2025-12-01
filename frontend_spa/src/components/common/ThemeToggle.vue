@@ -1,10 +1,10 @@
 <template>
   <div class="dropdown">
-    <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+    <button class="btn btn-ghost btn-sm dropdown-toggle d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
       <i :class="themeIcon"></i>
-      Тема
+      <span class="d-none d-sm-inline">Тема</span>
     </button>
-    <ul class="dropdown-menu dropdown-menu-end">
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
       <li>
         <button class="dropdown-item" :class="{ active: theme.value === 'system' }" @click="setTheme('system')">
           <i class="bi bi-circle-half me-2"></i> Системная

@@ -1,60 +1,56 @@
 <template>
   <MainLayout>
-    <div class="row g-3">
-      <div class="col-12">
-        <div class="hero-intro">
-          <h2 class="mb-1">Мои запросы</h2>
-          <p class="text-muted mb-0">История поисков. Откройте любой запрос, чтобы повторно посмотреть результаты или обновить характеристики.</p>
+    <div class="page-header">
+      <h1>Мои запросы</h1>
+      <p class="text-muted">История ваших поисков. Откройте любой запрос, чтобы повторно посмотреть результаты или обновить характеристики.</p>
+    </div>
+
+    <div class="card table-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 class="card-title mb-1">Последние запросы</h5>
+            <p class="text-muted mb-0">Показываем свежие запросы. Нужный не найден? Обновите список.</p>
+          </div>
+          <button class="btn btn-ghost" @click="loadRequests" :disabled="loading">
+            <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <i v-else class="bi bi-arrow-repeat me-1"></i> Обновить
+          </button>
         </div>
-      </div>
-      <div class="col-12">
-        <div class="card">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-              <div>
-                <h5 class="card-title mb-1">Последние запросы</h5>
-                <p class="text-muted mb-0">Показываем свежие запросы первого экрана. Нужный не найден? Нажмите «Обновить».</p>
-              </div>
-              <button class="btn btn-outline-light" @click="loadRequests" :disabled="loading">
-                <i class="bi bi-arrow-repeat me-1"></i> Обновить
-              </button>
-            </div>
-            <LoadingSpinner v-if="loading" />
-            <div v-else>
-              <div v-if="!requests.length" class="empty-state">
-                Вы ещё не выполняли поиска. Перейдите на вкладку «Поиск товаров» и запустите первый запрос.
-              </div>
-              <div v-else class="table-responsive">
-                <table class="table table-hover align-middle">
-                  <thead>
-                    <tr>
-                      <th>Дата/время</th>
-                      <th>Строка запроса</th>
-                      <th>Найдено товаров</th>
-                      <th>Статус</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="request in requests" :key="request.id">
-                      <td>{{ formatDate(request.created_at) }}</td>
-                      <td>
-                        <span :title="request.query_string">{{ truncate(request.query_string) }}</span>
-                      </td>
-                      <td><span class="badge bg-secondary">{{ request.total_items }}</span></td>
-                      <td>
-                        <span :class="statusClass(request.status)">{{ statusLabel(request.status) }}</span>
-                      </td>
-                      <td class="text-end">
-                        <button class="btn btn-outline-gradient btn-sm" @click="openRequest(request.id)">
-                          Открыть
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
+        <LoadingSpinner v-if="loading" />
+        <div v-else>
+          <div v-if="!requests.length" class="empty-state">
+            Вы ещё не выполняли поиска. Перейдите в «Поиск товаров» и запустите первый запрос.
+          </div>
+          <div v-else class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Дата/время</th>
+                  <th>Строка запроса</th>
+                  <th>Найдено</th>
+                  <th>Статус</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="request in requests" :key="request.id">
+                  <td>{{ formatDate(request.created_at) }}</td>
+                  <td>
+                    <span :title="request.query_string">{{ truncate(request.query_string) }}</span>
+                  </td>
+                  <td><span class="badge-pill muted-chip">{{ request.total_items }}</span></td>
+                  <td>
+                    <span :class="statusClass(request.status)">{{ statusLabel(request.status) }}</span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-outline-gradient btn-sm" @click="openRequest(request.id)">
+                      Открыть
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -109,13 +105,13 @@ const statusLabel = (status) => {
 const statusClass = (status) => {
   switch (status) {
     case 'done':
-      return 'badge text-bg-success';
+      return 'status-pill ready';
     case 'failed':
-      return 'badge text-bg-danger';
+      return 'status-pill failed';
     case 'in_progress':
-      return 'badge text-bg-info';
+      return 'status-pill pending';
     default:
-      return 'badge text-bg-warning text-dark';
+      return 'status-pill idle';
   }
 };
 

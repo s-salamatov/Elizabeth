@@ -1,14 +1,15 @@
 <template>
-  <div class="container py-5" style="max-width: 640px;">
-    <div class="text-center mb-4">
-      <h1 class="fw-bold">Создать аккаунт</h1>
-      <p class="text-muted">Регистрация в один шаг. После создания мы сразу авторизуем вас и откроем рабочую панель.</p>
-    </div>
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">Регистрация</h5>
-        <form @submit.prevent="submit">
-          <div class="row g-3">
+  <div class="auth-shell">
+    <div class="container auth-card">
+      <div class="card shadow-lg">
+        <div class="card-body p-4 p-md-5">
+          <div class="text-center mb-4">
+            <div class="pill-group mb-2">Регистрация</div>
+            <h1 class="fw-bold mb-1">Создать аккаунт</h1>
+            <p class="text-muted mb-0">Один шаг — и мы авторизуем вас сразу после создания.</p>
+          </div>
+
+          <form class="row g-3" @submit.prevent="submit">
             <div class="col-md-6">
               <label class="form-label" for="register-username">
                 Логин
@@ -65,16 +66,17 @@
                 />
               </label>
             </div>
-          </div>
-          <div class="d-flex align-items-center gap-3 mt-4">
-            <button class="btn btn-gradient" type="submit" :disabled="auth.state.loading">
-              <i class="bi bi-person-check me-1"></i>
-              Создать аккаунт
-            </button>
-            <RouterLink to="/login" class="text-light">У меня уже есть аккаунт</RouterLink>
-          </div>
-          <AlertMessage v-if="auth.state.error" :message="auth.state.error" variant="danger" class="mt-3" />
-        </form>
+            <div class="col-12 d-flex flex-wrap gap-3 align-items-center mt-2">
+              <button class="btn btn-gradient" type="submit" :disabled="auth.state.loading">
+                <span v-if="auth.state.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i v-else class="bi bi-person-check me-1"></i>
+                Создать аккаунт
+              </button>
+              <RouterLink to="/login" class="text-decoration-none">У меня уже есть аккаунт</RouterLink>
+            </div>
+            <AlertMessage v-if="auth.state.error" :message="auth.state.error" variant="danger" class="mt-2" />
+          </form>
+        </div>
       </div>
     </div>
   </div>

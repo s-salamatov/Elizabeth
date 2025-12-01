@@ -1,18 +1,15 @@
 <template>
   <MainLayout>
-    <div class="row g-3">
-      <div class="col-12">
-        <div class="hero-intro d-flex flex-wrap justify-content-between gap-3 align-items-center">
-          <div>
-            <h2 class="mb-1">Поиск товаров</h2>
-            <p class="text-muted mb-0">Введите артикулы и бренды, чтобы получить результаты из каталога Armtek. Затем нажмите «Получить характеристики товаров», чтобы фронтенд начал отслеживать их статус.</p>
-          </div>
-          <div class="d-flex gap-2 align-items-center">
-            <span class="badge bg-success-subtle text-success">API /api/v1/search/bulk</span>
-            <span class="badge bg-info-subtle text-info">Данные обновляются по мере поступления</span>
-          </div>
-        </div>
+    <div class="page-header">
+      <h1>Поиск товаров</h1>
+      <p class="text-muted">Введите артикулы и бренды, запустите поиск, затем запросите характеристики, чтобы фронтенд начал их отслеживать.</p>
+      <div class="d-flex flex-wrap gap-2 mt-2">
+        <span class="pill-group">API /api/v1/search/bulk</span>
+        <span class="muted-chip">Данные подтягиваются по мере готовности</span>
       </div>
+    </div>
+
+    <div class="row g-3">
       <div class="col-12">
         <SearchForm
           v-model="query"

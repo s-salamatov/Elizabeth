@@ -1,17 +1,21 @@
 <template>
-  <div class="card">
+  <div class="card table-card">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
           <h5 class="card-title mb-1">Результаты поиска</h5>
-          <p class="text-muted mb-0">Найдено {{ products.length }} товаров. Получите характеристики, чтобы увидеть фото и габариты.</p>
+          <p class="text-muted mb-0">
+            <span v-if="products.length">Найдено {{ products.length }} товаров. Получите характеристики, чтобы увидеть фото и габариты.</span>
+            <span v-else>Результатов пока нет. Введите артикулы и нажмите «Найти».</span>
+          </p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex flex-wrap gap-2">
           <button class="btn btn-outline-gradient" :disabled="products.length === 0 || requesting" @click="requestDetails">
-            <i class="bi bi-collection-play me-1"></i>
-            Получить характеристики товаров
+            <span v-if="requesting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <i v-else class="bi bi-collection-play me-1"></i>
+            {{ requesting ? 'Идёт обработка…' : 'Получить характеристики товаров' }}
           </button>
-          <button class="btn btn-outline-light" :disabled="refreshing" @click="$emit('refresh')">
+          <button class="btn btn-ghost btn-outline-light" :disabled="refreshing" @click="$emit('refresh')">
             <i class="bi bi-arrow-repeat me-1"></i> Обновить
           </button>
         </div>
@@ -27,7 +31,7 @@
               <th>Бренд</th>
               <th>Наименование</th>
               <th>Источник</th>
-              <th>Статус характеристик</th>
+              <th>Статус</th>
             </tr>
           </thead>
           <tbody>
@@ -35,7 +39,7 @@
               <td class="fw-semibold">{{ product.artid }}</td>
               <td>{{ product.brand }}</td>
               <td>{{ product.name }}</td>
-              <td><span class="badge bg-secondary">{{ product.source }}</span></td>
+              <td><span class="badge-pill muted-chip text-uppercase">{{ product.source }}</span></td>
               <td>
                 <span
                   :class="statusClass(product.details_status)"
@@ -74,12 +78,13 @@ const emit = defineEmits(['request-details', 'refresh']);
 const statusClass = (status) => {
   switch (status) {
     case 'ready':
-      return 'badge text-bg-success';
+      return 'status-pill ready';
     case 'failed':
-      return 'badge text-bg-danger';
+      return 'status-pill failed';
     case 'pending':
+      return 'status-pill pending';
     default:
-      return 'badge text-bg-warning text-dark';
+      return 'status-pill idle';
   }
 };
 

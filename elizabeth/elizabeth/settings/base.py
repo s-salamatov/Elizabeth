@@ -15,7 +15,7 @@ for env_path in (BASE_DIR / ".env", BASE_DIR.parent / ".env"):
     if env_path.exists():
         env.read_env(env_path)
 
-SECRET_KEY = env("SECRET_KEY", default="dev-secret-key-change-me")
+SECRET_KEY = env("SECRET_KEY", default="dev-secret-key-change-me") # todo: remove default so app won't start without key specified in env
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS: list[str] = env.list("ALLOWED_HOSTS", default=[])
 

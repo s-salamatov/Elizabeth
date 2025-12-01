@@ -4,7 +4,7 @@
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
         <div>
           <h5 class="card-title mb-1">Профиль</h5>
-          <p class="text-muted mb-0">Обновите контактные данные и выберите, откуда выполнять поиск по умолчанию.</p>
+          <p class="text-muted mb-0">Обновите контактные данные, источник поиска и тему, чтобы интерфейс подстраивался под ваш рабочий режим.</p>
         </div>
         <span class="badge-soft">Сохраняется на сервере</span>
       </div>
@@ -66,6 +66,9 @@
             Сохранить настройки
           </button>
           <span class="text-muted" v-if="saving">Сохраняем профиль…</span>
+        </div>
+        <div class="col-12">
+          <div class="form-text">Тема и часовой пояс применяются только на этом устройстве и в этом браузере.</div>
         </div>
         <AlertMessage v-if="message" :message="message" :variant="messageVariant" />
       </form>

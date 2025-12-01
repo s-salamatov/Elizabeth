@@ -2,7 +2,7 @@
   <MainLayout>
     <div class="page-header">
       <h1>Мои запросы</h1>
-      <p class="text-muted">История ваших поисков. Откройте любой запрос, чтобы повторно посмотреть результаты или обновить характеристики.</p>
+      <p class="text-muted">Отслеживайте историю поисков и открывайте нужный запрос, чтобы обновить статусы характеристик.</p>
     </div>
 
     <div class="card table-card">
@@ -10,7 +10,7 @@
         <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
           <div>
             <h5 class="card-title mb-1">Последние запросы</h5>
-            <p class="text-muted mb-0">Показываем свежие запросы. Нужный не найден? Обновите список.</p>
+            <p class="text-muted mb-0">Мы фиксируем каждый поиск. Нужный не найден? Обновите список и откройте запрос.</p>
           </div>
           <button class="btn btn-ghost" @click="loadRequests" :disabled="loading">
             <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>

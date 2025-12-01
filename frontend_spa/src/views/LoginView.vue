@@ -6,17 +6,17 @@
           <div class="text-center mb-4">
             <div class="pill-group mb-2">SPA • Armtek</div>
             <h1 class="fw-bold mb-1">Elizabeth</h1>
-            <p class="text-muted mb-0">SPA-интерфейс для поиска и загрузки характеристик из Armtek.</p>
+            <p class="text-muted mb-0">Современная панель для поиска, проверки наличия и загрузки характеристик.</p>
           </div>
 
-          <div class="mb-3">
-            <h5 class="card-title mb-1">Вход в аккаунт</h5>
-            <p class="text-muted mb-0">Используйте логин и пароль вашей Django-учётки. Токен хранится только в браузере.</p>
+          <div class="mb-3 text-start">
+            <h5 class="card-title mb-1">Войти в систему</h5>
+            <p class="text-muted mb-0">Введите учётные данные Django. Токен хранится только в браузере и не передается третьим лицам.</p>
           </div>
 
           <form class="d-flex flex-column gap-3" @submit.prevent="submit">
             <div>
-              <label class="form-label" for="login-username">
+              <label class="form-label w-100" for="login-username">
                 Логин
                 <input
                   id="login-username"
@@ -25,11 +25,12 @@
                   class="form-control"
                   autocomplete="username"
                   required
+                  placeholder="Введите логин"
                 />
               </label>
             </div>
             <div>
-              <label class="form-label" for="login-password">
+              <label class="form-label w-100" for="login-password">
                 Пароль
                 <input
                   id="login-password"
@@ -39,9 +40,10 @@
                   class="form-control"
                   autocomplete="current-password"
                   required
+                  placeholder="Введите пароль"
                 />
               </label>
-              <div class="form-text">Токен формируется через /api/v1/auth/login и сохраняется локально.</div>
+              <div class="form-text">Используйте логин и пароль Django-учётной записи. При ошибке проверим текст и предложим повторить.</div>
             </div>
             <button class="btn btn-gradient w-100 d-inline-flex align-items-center justify-content-center" type="submit" :disabled="auth.state.loading">
               <span v-if="auth.state.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -55,7 +57,10 @@
             />
           </form>
 
-          <p class="mt-4 mb-0 text-muted text-center">
+          <p class="mt-4 mb-0 text-muted text-center small">
+            Используйте логин и пароль Django-учётной записи. Токен хранится только в браузере.
+          </p>
+          <p class="mt-2 mb-0 text-muted text-center">
             Нет аккаунта?
             <RouterLink to="/register">Зарегистрируйтесь</RouterLink>.
           </p>

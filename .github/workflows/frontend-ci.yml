@@ -45,6 +45,16 @@ jobs:
         working-directory: frontend_spa
         run: npm run build
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: E2E smoke tests
         working-directory: frontend_spa
         run: npm run e2e

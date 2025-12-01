@@ -78,7 +78,7 @@ const loadRequests = async () => {
   try {
     const { data } = await SearchApi.list();
     requests.value = data || [];
-  } catch (err) {
+  } catch {
     requests.value = [];
   } finally {
     loading.value = false;

@@ -62,7 +62,7 @@
 <script setup>
 import AlertMessage from '../common/AlertMessage.vue';
 
-const props = defineProps({
+defineProps({
   products: { type: Array, default: () => [] },
   requesting: { type: Boolean, default: false },
   refreshing: { type: Boolean, default: false },

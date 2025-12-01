@@ -137,7 +137,7 @@ const pollOnce = async () => {
     const { data } = await ProductApi.pollStatus(requestIds);
     const map = new Map((data || []).map((item) => [item.id, item]));
     products.value = products.value.map((p) => (map.has(p.id) ? map.get(p.id) : p));
-  } catch (err) {
+  } catch {
     helperMessage.value = 'Не удалось обновить статусы. Попробуйте обновить страницу или повторить позже.';
   }
 };

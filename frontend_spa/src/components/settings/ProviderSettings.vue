@@ -10,12 +10,31 @@
       </div>
       <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label">Логин</label>
-          <input v-model="login" class="form-control" placeholder="Ваш Armtek логин" />
+          <label class="form-label" for="armtek-login">
+            Логин
+            <input
+              id="armtek-login"
+              name="armtek-login"
+              v-model="login"
+              class="form-control"
+              placeholder="Ваш Armtek логин"
+              autocomplete="username"
+            />
+          </label>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Пароль</label>
-          <input v-model="password" type="password" class="form-control" placeholder="••••••••" />
+          <label class="form-label" for="armtek-password">
+            Пароль
+            <input
+              id="armtek-password"
+              name="armtek-password"
+              v-model="password"
+              type="password"
+              class="form-control"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+          </label>
         </div>
       </div>
       <div class="form-text mt-2">
@@ -57,7 +76,7 @@ const loadCredentials = async () => {
     } else {
       hasExisting.value = false;
     }
-  } catch (error) {
+  } catch {
     hasExisting.value = false;
   }
 };
@@ -94,7 +113,7 @@ const remove = async () => {
     hasExisting.value = false;
     login.value = '';
     password.value = '';
-  } catch (error) {
+  } catch {
     message.value = 'Не удалось удалить данные. Попробуйте ещё раз.';
     messageVariant.value = 'danger';
   } finally {

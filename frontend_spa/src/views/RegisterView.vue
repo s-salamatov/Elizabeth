@@ -10,21 +10,60 @@
         <form @submit.prevent="submit">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Логин</label>
-              <input v-model="username" class="form-control" required />
+              <label class="form-label" for="register-username">
+                Логин
+                <input
+                  id="register-username"
+                  name="username"
+                  v-model="username"
+                  class="form-control"
+                  autocomplete="username"
+                  required
+                />
+              </label>
               <div class="form-text">Минимум 3 символа. Используется для входа.</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Email</label>
-              <input v-model="email" type="email" class="form-control" required />
+              <label class="form-label" for="register-email">
+                Email
+                <input
+                  id="register-email"
+                  name="email"
+                  v-model="email"
+                  type="email"
+                  class="form-control"
+                  autocomplete="email"
+                  required
+                />
+              </label>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Пароль</label>
-              <input v-model="password" type="password" class="form-control" required />
+              <label class="form-label" for="register-password">
+                Пароль
+                <input
+                  id="register-password"
+                  name="password"
+                  v-model="password"
+                  type="password"
+                  class="form-control"
+                  autocomplete="new-password"
+                  required
+                />
+              </label>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Повтор пароля</label>
-              <input v-model="password2" type="password" class="form-control" required />
+              <label class="form-label" for="register-password2">
+                Повтор пароля
+                <input
+                  id="register-password2"
+                  name="password-confirmation"
+                  v-model="password2"
+                  type="password"
+                  class="form-control"
+                  autocomplete="new-password"
+                  required
+                />
+              </label>
             </div>
           </div>
           <div class="d-flex align-items-center gap-3 mt-4">

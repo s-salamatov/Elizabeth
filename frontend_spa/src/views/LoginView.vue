@@ -10,12 +10,31 @@
         <p class="text-muted">Используйте логин и пароль вашей Django-учётки. Токен хранится только в браузере.</p>
         <form @submit.prevent="submit">
           <div class="mb-3">
-            <label class="form-label">Логин</label>
-            <input v-model="username" class="form-control" autocomplete="username" required />
+            <label class="form-label" for="login-username">
+              Логин
+              <input
+                id="login-username"
+                name="username"
+                v-model="username"
+                class="form-control"
+                autocomplete="username"
+                required
+              />
+            </label>
           </div>
           <div class="mb-3">
-            <label class="form-label">Пароль</label>
-            <input v-model="password" type="password" class="form-control" autocomplete="current-password" required />
+            <label class="form-label" for="login-password">
+              Пароль
+              <input
+                id="login-password"
+                name="password"
+                v-model="password"
+                type="password"
+                class="form-control"
+                autocomplete="current-password"
+                required
+              />
+            </label>
             <div class="form-text">Токен формируется через /api/v1/auth/login.</div>
           </div>
           <button class="btn btn-gradient w-100" type="submit" :disabled="auth.state.loading">

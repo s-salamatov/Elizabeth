@@ -10,30 +10,43 @@
       </div>
       <form class="row g-3" @submit.prevent="saveProfile">
         <div class="col-md-6">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" v-model="email" placeholder="user@example.com" />
+          <label class="form-label" for="profile-email">
+            Email
+            <input
+              id="profile-email"
+              name="email"
+              type="email"
+              class="form-control"
+              v-model="email"
+              placeholder="user@example.com"
+            />
+          </label>
           <div class="form-text">Используем для уведомлений и восстановления доступа.</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Источник поиска</label>
-          <select class="form-select" v-model="defaultSource">
-            <option value="armtek">Armtek (рекомендовано)</option>
-            <option value="catalog">Внутренний каталог</option>
-          </select>
+          <label class="form-label" for="profile-source">
+            Источник поиска
+            <select id="profile-source" name="defaultSource" class="form-select" v-model="defaultSource">
+              <option value="armtek">Armtek (рекомендовано)</option>
+              <option value="catalog">Внутренний каталог</option>
+            </select>
+          </label>
           <div class="form-text">По умолчанию backend настроен на Armtek. Другие источники появятся позже.</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Часовой пояс (локально)</label>
-          <select class="form-select" v-model="timezone">
-            <option value="Europe/Moscow">Europe/Moscow</option>
-            <option value="Europe/Minsk">Europe/Minsk</option>
-            <option value="Europe/Riga">Europe/Riga</option>
-            <option value="UTC">UTC</option>
-          </select>
+          <label class="form-label" for="profile-timezone">
+            Часовой пояс (локально)
+            <select id="profile-timezone" name="timezone" class="form-select" v-model="timezone">
+              <option value="Europe/Moscow">Europe/Moscow</option>
+              <option value="Europe/Minsk">Europe/Minsk</option>
+              <option value="Europe/Riga">Europe/Riga</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </label>
           <div class="form-text">Параметр хранится в браузере и помогает форматировать даты.</div>
         </div>
         <div class="col-md-6">
-          <label class="form-label">Тема оформления</label>
+          <p class="form-label mb-1">Тема оформления</p>
           <div class="d-flex gap-2 flex-wrap">
             <span class="theme-chip" :class="{ 'bg-dark text-white': theme.resolvedTheme.value === 'dark' }">
               <i class="bi" :class="themeIcon"></i>

@@ -1,37 +1,48 @@
-name: CI
+name: Backend CI
 
 on:
   push:
-    branches: [main, django_migration]
+    paths:
+      - '**/*.py'
+      - 'elizabeth/**'
+      - 'extensions/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'mypy.ini'
+      - 'pytest.ini'
+      - 'manage.py'
+      - '.github/workflows/backend-ci.yml'
   pull_request:
-    branches: [main]
+    paths:
+      - '**/*.py'
+      - 'elizabeth/**'
+      - 'extensions/**'
+      - 'scripts/**'
+      - 'requirements.txt'
+      - 'pyproject.toml'
+      - 'mypy.ini'
+      - 'pytest.ini'
+      - 'manage.py'
+      - '.github/workflows/backend-ci.yml'
 
 jobs:
-  lint-test:
+  backend-ci:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
     env:
       DJANGO_SETTINGS_MODULE: elizabeth.elizabeth.settings.dev
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install frontend dependencies
-        working-directory: frontend_spa
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend_spa
-        run: npm run build
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
@@ -39,8 +50,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Django migrations
-        run: |
-          python manage.py migrate --noinput
+        run: python manage.py migrate --noinput
 
       - name: Django system check
         run: python manage.py check

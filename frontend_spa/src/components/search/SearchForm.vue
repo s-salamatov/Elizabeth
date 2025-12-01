@@ -13,14 +13,17 @@
         </div>
       </div>
       <div class="mb-3">
-        <label class="form-label fw-semibold" for="omni-input">Артикулы и бренды</label>
-        <textarea
-          id="omni-input"
-          class="form-control"
-          rows="5"
-          v-model="innerValue"
-          placeholder="332101_KYB\n1600332 KYB\nМожно вставить сразу несколько строк"
-        ></textarea>
+        <label class="form-label fw-semibold" for="omni-input">
+          Артикулы и бренды
+          <textarea
+            id="omni-input"
+            name="omni-input"
+            class="form-control"
+            rows="5"
+            v-model="innerValue"
+            placeholder="332101_KYB\n1600332 KYB\nМожно вставить сразу несколько строк"
+          ></textarea>
+        </label>
         <div class="form-text">
           Пример: 332101_KYB или 1600332 KYB. Разделители: запятая, точка с запятой, перенос строки.
         </div>

@@ -25,7 +25,7 @@ export function useAuth() {
           clearAuthTokens();
           state.tokens = null;
         }
-      } catch (error) {
+      } catch {
         clearAuthTokens();
         state.tokens = null;
       }
@@ -77,7 +77,7 @@ export function useAuth() {
       state.user = data.user;
       state.settings = data.settings;
       return data;
-    } catch (error) {
+    } catch {
       return null;
     }
   };

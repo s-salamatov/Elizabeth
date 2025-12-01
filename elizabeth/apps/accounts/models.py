@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 
+# todo: amend user model to extend fields
 class UserSettings(models.Model):
     """Per-user application preferences."""
 

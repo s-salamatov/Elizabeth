@@ -17,8 +17,8 @@
 - Install: `pip install -r requirements.txt`
 - Migrate: `python manage.py migrate --noinput`
 - Run dev server: `python manage.py runserver 0.0.0.0:8000`
-- Full checks: `./scripts/lint.sh` (manage.py check, black, isort, flake8, mypy, pytest)
-- CI mirrors lint.sh plus migrations (see `.github/workflows/ci.yml`).
+- Full checks: `./scripts/check_backend.sh` + `./scripts/check_frontend.sh` (lint.sh теперь просто вызывает их).
+- CI повторяет те же шаги, см. `.github/workflows/backend-ci.yml` и `.github/workflows/frontend-ci.yml`.
 
 ## Coding Style
 - Python 3.12, black + isort; flake8 with bugbear/comprehensions; mypy strict with django/drf plugins.

@@ -47,8 +47,9 @@ python manage.py runserver 0.0.0.0:8000
 - `POST /products/<id>/details` — колбэк от расширения
 
 ## Тесты и линтеры
-- `scripts/lint.sh` запускает: `manage.py check`, black, isort, flake8, mypy, pytest.
-- CI (`.github/workflows/ci.yml`) делает migrate, check, формат/линт/типизацию и pytest.
+- Backend: `scripts/check_backend.sh` (migrate → manage.py check → black --check → isort --check-only → flake8 → mypy → pytest).
+- Frontend: `scripts/check_frontend.sh` (on-demand npm ci → Playwright browsers install → npm run lint → npm run test → npm run build → npm run e2e).
+- Pre-commit hook (`.git/hooks/pre-commit`) запускает оба скрипта перед коммитом; пропуск: `SKIP_PRECOMMIT=1 git commit -m "msg"` или `git commit --no-verify`.
 
 ## Userscript
 Файл: `extensions/armtek_extension.user.js`

@@ -34,8 +34,9 @@ python manage.py runserver 0.0.0.0:8000
 - Отправляет JSON в `/api/v1/products/<id>/details` с заголовком `X-Details-Token`.
 
 ## 6. Tests & Linters
-- Полный набор: `./scripts/lint.sh` (manage.py check → black → isort → flake8 → mypy → pytest)
-- Отдельно: `python manage.py check`, `pytest`, `mypy .`, `flake8 .`, `black --check .`, `isort --check-only .`
+- Backend: `./scripts/check_backend.sh` (migrate → manage.py check → black --check → isort --check-only → flake8 → mypy → pytest).
+- Frontend: `./scripts/check_frontend.sh` (on-demand npm ci → Playwright install → npm run lint/test/build/e2e).
+- Pre-commit автоматически запускает оба скрипта; пропуск — `SKIP_PRECOMMIT=1 git commit -m "..."` или `git commit --no-verify`.
 
 ## 7. Integration (реальные запросы)
 Установите реальные креды Armtek и отключите `ARMTEK_ENABLE_STUB`.

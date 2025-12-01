@@ -2,10 +2,11 @@
   <MainLayout>
     <div class="page-header">
       <h1>Поиск товаров</h1>
-      <p class="text-muted">Введите артикулы и бренды, запустите поиск, затем запросите характеристики, чтобы фронтенд начал их отслеживать.</p>
-      <div class="d-flex flex-wrap gap-2 mt-2">
+      <p class="text-muted">Введите артикулы и бренды, запустите поиск и нажмите «Получить характеристики», чтобы фронтенд начал отслеживать их статус.</p>
+      <div class="page-meta mt-2">
         <span class="pill-group">API /api/v1/search/bulk</span>
-        <span class="muted-chip">Данные подтягиваются по мере готовности</span>
+        <span class="muted-chip">Характеристики подтягиваются по мере готовности</span>
+        <span class="muted-chip">Таблица обновляется каждые 5 секунд</span>
       </div>
     </div>
 

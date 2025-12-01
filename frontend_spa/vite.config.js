@@ -5,6 +5,14 @@ import path from 'path';
 export default defineConfig({
   plugins: [vue()],
   base: '/static/frontend/',
+  css: {
+    preprocessorOptions: {
+      scss: {
+        quietDeps: true,
+        silenceDeprecations: ['legacy-js-api', 'import', 'global-builtin', 'color-functions'],
+      },
+    },
+  },
   build: {
     outDir: path.resolve(__dirname, '../elizabeth/apps/frontend/static/frontend'),
     emptyOutDir: true,

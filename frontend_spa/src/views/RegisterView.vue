@@ -6,12 +6,12 @@
           <div class="text-center mb-4">
             <div class="pill-group mb-2">Регистрация</div>
             <h1 class="fw-bold mb-1">Создать аккаунт</h1>
-            <p class="text-muted mb-0">Один шаг — и мы авторизуем вас сразу после создания.</p>
+            <p class="text-muted mb-0">Один шаг — и вы сразу попадёте в рабочую панель.</p>
           </div>
 
           <form class="row g-3" @submit.prevent="submit">
             <div class="col-md-6">
-              <label class="form-label" for="register-username">
+              <label class="form-label w-100" for="register-username">
                 Логин
                 <input
                   id="register-username"
@@ -20,12 +20,13 @@
                   class="form-control"
                   autocomplete="username"
                   required
+                  placeholder="work.user"
                 />
               </label>
               <div class="form-text">Минимум 3 символа. Используется для входа.</div>
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="register-email">
+              <label class="form-label w-100" for="register-email">
                 Email
                 <input
                   id="register-email"
@@ -35,11 +36,12 @@
                   class="form-control"
                   autocomplete="email"
                   required
+                  placeholder="you@example.com"
                 />
               </label>
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="register-password">
+              <label class="form-label w-100" for="register-password">
                 Пароль
                 <input
                   id="register-password"
@@ -49,11 +51,12 @@
                   class="form-control"
                   autocomplete="new-password"
                   required
+                  placeholder="••••••••"
                 />
               </label>
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="register-password2">
+              <label class="form-label w-100" for="register-password2">
                 Повтор пароля
                 <input
                   id="register-password2"
@@ -63,6 +66,7 @@
                   class="form-control"
                   autocomplete="new-password"
                   required
+                  placeholder="••••••••"
                 />
               </label>
             </div>

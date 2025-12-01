@@ -1,22 +1,30 @@
 <template>
   <header class="topbar">
-    <div class="container page-container d-flex align-items-center justify-content-between py-3">
+    <div class="container page-container d-flex align-items-center justify-content-between py-3 gap-3">
       <div class="d-flex align-items-center gap-3">
         <div class="brand d-flex align-items-center gap-2">
-          <i class="bi bi-search text-primary"></i>
-          <span>Elizabeth</span>
+          <div class="p-2 rounded-3 bg-primary bg-opacity-10 text-primary">
+            <i class="bi bi-search"></i>
+          </div>
+          <div>
+            <div>Elizabeth</div>
+            <small class="text-muted d-none d-sm-block">Работаем с каталогом Armtek</small>
+          </div>
         </div>
         <div class="d-none d-md-flex align-items-center gap-2 text-muted small">
-          <span class="pill-group">REST API</span>
-          <span>Работаем через /api/v1</span>
+          <span class="pill-group">REST /api/v1</span>
+          <span>Сессия активна</span>
         </div>
       </div>
-      <div class="d-flex align-items-center gap-3">
-        <ThemeToggle />
-        <div class="text-end d-none d-md-block" v-if="auth.state.user">
-          <div class="fw-semibold">{{ auth.state.user.username }}</div>
-          <small class="text-muted">в системе</small>
+      <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+        <div class="topbar-user" v-if="auth.state.user">
+          <i class="bi bi-person-circle text-primary"></i>
+          <div class="small lh-sm">
+            <div class="fw-semibold">{{ auth.state.user.username }}</div>
+            <span class="text-muted">Онлайн</span>
+          </div>
         </div>
+        <ThemeToggle />
         <button class="btn btn-ghost btn-sm" @click="logout">
           <i class="bi bi-box-arrow-right me-1"></i>
           Выйти

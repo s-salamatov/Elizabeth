@@ -47,6 +47,14 @@ class ProviderAccount(models.Model):
     )
     login = models.CharField(max_length=255)
     encrypted_password = models.TextField()
+    # Armtek-specific cached context
+    pin = models.CharField(max_length=255, null=True, blank=True)
+    vkorg = models.CharField(max_length=64, null=True, blank=True)
+    kunnr_rg = models.CharField(max_length=64, null=True, blank=True)
+    program = models.CharField(max_length=255, null=True, blank=True)
+    kunnr_za = models.CharField(max_length=64, null=True, blank=True)
+    incoterms = models.IntegerField(null=True, blank=True)
+    vbeln = models.CharField(max_length=64, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

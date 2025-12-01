@@ -9,7 +9,7 @@ from elizabeth.apps.products.services import upsert_products_from_search
 from elizabeth.apps.providers.armtek.services import ArmtekSearchService
 from elizabeth.apps.providers.services import resolve_armtek_credentials
 from elizabeth.apps.search.models import SearchRequest, SearchStatus
-from elizabeth.apps.search.parsers import split_bulk_input, split_pin_and_brand
+from elizabeth.apps.search.parsers import split_pin_and_brand
 
 
 @transaction.atomic
@@ -97,8 +97,4 @@ def _run_search_flow(
 
 
 def parse_bulk_payload(data: dict[str, Any]) -> List[str]:
-    queries = data.get("queries") or []
-    bulk_text = data.get("bulk_text") or ""
-    if bulk_text:
-        queries.extend(split_bulk_input(bulk_text))
-    return [q for q in queries if q]
+    return [q for q in data.get("queries", []) if q]

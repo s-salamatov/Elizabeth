@@ -16,6 +16,7 @@ export const SearchApi = {
 export const ProductApi = {
   requestDetails: (productIds) => api.post('/products/details/request', { product_ids: productIds }),
   pollStatus: (requestIds) => api.post('/products/details/status', { request_ids: requestIds }),
+  jobs: (limit = 50) => api.get('/products/details/jobs', { params: { limit } }),
 };
 
 export const ProviderApi = {

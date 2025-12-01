@@ -58,7 +58,7 @@ python manage.py runserver 0.0.0.0:8000
 - По умолчанию API_BASE в скрипте: `http://127.0.0.1:8000/api/v1` — смените на прод при деплое.
 
 ## ENV важное
-- Armtek API: `ARMTEK_BASE_URL`, `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`, `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB`, `ARMTEK_HTML_BASE_URL` (для ссылок jobs).
+- Armtek API: `ARMTEK_BASE_URL`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB`, `ARMTEK_HTML_BASE_URL` (для ссылок jobs). Логин/пароль и контекст (VKORG/KUNNR_RG/…) задаёт сам пользователь через `/api/v1/providers/armtek/credentials` и хранится в БД.
 - CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `ELIZABETH_EXTENSION_ALLOWED_ORIGIN`.
 - Security: `SECRET_KEY`, `PROVIDER_SECRET_KEY` (для шифрования паролей провайдеров).
 

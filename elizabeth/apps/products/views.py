@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, List, cast
+from urllib.parse import quote
 
 from django.conf import settings
 from django.db.models import QuerySet
@@ -165,8 +166,9 @@ class ProductDetailsJobsView(APIView):
         jobs = []
         for product in pending:
             req = product.details_request
+            artid_encoded = quote(product.artid, safe="")
             open_url = (
-                f"{base_url}/{product.artid}"
+                f"{base_url}/{artid_encoded}"
                 f"?elizabeth_product_id={product.id}&request_id={req.request_id}"
             )
             jobs.append(

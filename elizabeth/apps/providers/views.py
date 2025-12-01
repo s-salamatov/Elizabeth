@@ -21,6 +21,7 @@ from elizabeth.apps.providers.serializers import (
 from elizabeth.apps.providers.services import (
     resolve_armtek_credentials,
     save_provider_account,
+    update_armtek_account_context,
 )
 from elizabeth.apps.search.services import perform_single_search
 
@@ -46,15 +47,7 @@ class ArmtekSearchProxyView(APIView):
 
         try:
             search_request, products = perform_single_search(
-                serializer.validated_data.get("query")
-                or " ".join(
-                    part
-                    for part in [
-                        serializer.validated_data.get("pin"),
-                        serializer.validated_data.get("brand"),
-                    ]
-                    if part
-                ).strip(),
+                serializer.validated_data["query"],
                 user=user,
                 source="armtek",
             )
@@ -94,12 +87,25 @@ class ArmtekCredentialsView(APIView):
         serializer = ArmtekCredentialsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        save_provider_account(
+        account = save_provider_account(
             user=user,
             provider_name="armtek",
             login=data["login"],
             password=data["password"],
+            pin=data.get("pin"),
+            vkorg=data.get("vkorg"),
+            kunnr_rg=data.get("kunnr_rg"),
+            program=data.get("program"),
+            kunnr_za=data.get("kunnr_za"),
+            incoterms=data.get("incoterms"),
+            vbeln=data.get("vbeln"),
         )
+        try:
+            update_armtek_account_context(account)
+        except ArmtekCredentialsError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except ArmtekError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def delete(self, request: Request, *args: object, **kwargs: object) -> Response:

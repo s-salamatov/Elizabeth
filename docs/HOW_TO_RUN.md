@@ -10,7 +10,7 @@ pip install -r requirements.txt
 Create `.env` (dev defaults are fine):
 - Core: `SECRET_KEY`, `DEBUG=1`
 - DB: `DATABASE_URL` (по умолчанию SQLite)
-- Armtek: `ARMTEK_LOGIN`, `ARMTEK_PASSWORD`, `ARMTEK_PIN`, `ARMTEK_VKORG`, `ARMTEK_KUNNR_RG`, optional `ARMTEK_PROGRAM`, `ARMTEK_KUNNR_ZA`, `ARMTEK_INCOTERMS`, `ARMTEK_VBELN`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB=1` for offline demo, `ARMTEK_HTML_BASE_URL=https://etp.armtek.ru/artinfo/index`
+- Armtek: `ARMTEK_BASE_URL`, `ARMTEK_TIMEOUT`, `ARMTEK_ENABLE_STUB=1` for offline demo, `ARMTEK_HTML_BASE_URL=https://etp.armtek.ru/artinfo/index`. Логин/пароль и привязанные VKORG/KUNNR данные сохраняются пользователем через `/api/v1/providers/armtek/credentials`.
 - CORS/CSRF: `CORS_ALLOWED_ORIGINS`, `CSRF_TRUSTED_ORIGINS`, `ELIZABETH_EXTENSION_ALLOWED_ORIGIN`
 
 ## 3. Migrate & Run

@@ -5,6 +5,7 @@ from typing import Any, cast
 from rest_framework import serializers
 
 from elizabeth.apps.search.models import SearchRequest
+from elizabeth.apps.search.parsers import split_bulk_input, split_pin_and_brand
 
 
 class SearchInputSerializer(serializers.Serializer[dict[str, Any]]):
@@ -12,6 +13,13 @@ class SearchInputSerializer(serializers.Serializer[dict[str, Any]]):
 
     query = cast(Any, serializers.CharField())
     source = cast(Any, serializers.CharField(default="armtek"))
+
+    def validate_query(self, value: str) -> str:
+        try:
+            split_pin_and_brand(value)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+        return value
 
 
 class BulkSearchSerializer(serializers.Serializer[dict[str, Any]]):
@@ -27,13 +35,22 @@ class BulkSearchSerializer(serializers.Serializer[dict[str, Any]]):
     source = cast(Any, serializers.CharField(default="armtek"))
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
-        queries = attrs.get("queries") or []
+        list_queries = attrs.get("queries") or []
         bulk_text = attrs.get("bulk_text") or ""
-        if not queries and not bulk_text:
+        combined = list(list_queries)
+        if bulk_text:
+            combined.extend(split_bulk_input(bulk_text))
+        combined = [item.strip() for item in combined if item and item.strip()]
+        if not combined:
             raise serializers.ValidationError(
                 "Provide either queries array or bulk_text"
             )
-        attrs["queries"] = queries
+        for query in combined:
+            try:
+                split_pin_and_brand(query)
+            except ValueError as exc:
+                raise serializers.ValidationError(str(exc)) from exc
+        attrs["queries"] = combined
         attrs["bulk_text"] = bulk_text
         return attrs
 

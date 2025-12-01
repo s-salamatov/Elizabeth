@@ -18,7 +18,7 @@
         <label class="form-label w-100" for="omni-input">
           <div class="input-toolbar">
             <span class="mb-0">Артикулы и бренды</span>
-            <span class="table-help"><i class="bi bi-info-circle"></i> Поддерживаем форматы PIN_BRAND, PIN BRAND или просто PIN.</span>
+            <span class="table-help"><i class="bi bi-info-circle"></i> Формат строго PIN_BRAND, например 332101_KYB.</span>
           </div>
           <textarea
             id="omni-input"
@@ -26,12 +26,12 @@
             class="form-control"
             rows="6"
             v-model="innerValue"
-            placeholder="332101_KYB\n1600332 KYB\nМожно вставить сразу несколько строк"
+            placeholder="332101_KYB\n1600332_SACHS\nМожно вставить сразу несколько строк"
           ></textarea>
         </label>
         <div class="form-text d-flex align-items-center gap-2 mt-2">
           <i class="bi bi-magic"></i>
-          <span>Заполняйте без строгого формата — мы сами разделим по запятым, точкам с запятой или переносам строк.</span>
+          <span>Используйте подчёркивание между артикулом и брендом. Разделяйте позиции новой строкой, запятой или точкой с запятой.</span>
         </div>
       </div>
 

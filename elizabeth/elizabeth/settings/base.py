@@ -133,18 +133,6 @@ PROVIDER_SECRET_KEY = env("PROVIDER_SECRET_KEY", default="".ljust(32, "x"))
 # Armtek defaults
 ARMTEK_BASE_URL = env("ARMTEK_BASE_URL", default="https://ws.armtek.ru")
 ARMTEK_TIMEOUT = env.int("ARMTEK_TIMEOUT", default=10)
-ARMTEK_LOGIN = env("ARMTEK_LOGIN", default=None)
-ARMTEK_PASSWORD = env("ARMTEK_PASSWORD", default=None)
-ARMTEK_PIN = env("ARMTEK_PIN", default=None)
-ARMTEK_VKORG = env("ARMTEK_VKORG", default=None)
-ARMTEK_KUNNR_RG = env("ARMTEK_KUNNR_RG", default=None)
-ARMTEK_PROGRAM = env("ARMTEK_PROGRAM", default=None)
-ARMTEK_KUNNR_ZA = env("ARMTEK_KUNNR_ZA", default=None)
-ARMTEK_VBELN = env("ARMTEK_VBELN", default=None)
-ARMTEK_INCOTERMS_RAW = env("ARMTEK_INCOTERMS", default=None)
-ARMTEK_INCOTERMS = (
-    int(ARMTEK_INCOTERMS_RAW) if ARMTEK_INCOTERMS_RAW not in (None, "") else None
-)
 ARMTEK_ENABLE_STUB = env.bool("ARMTEK_ENABLE_STUB", default=DEBUG)
 ARMTEK_HTML_BASE_URL = env(
     "ARMTEK_HTML_BASE_URL", default="https://etp.armtek.ru/artinfo/index"

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 
+from elizabeth.apps.providers.armtek.profile import ArmtekProfile, fetch_armtek_profile
 from elizabeth.apps.providers.models import ProviderAccount, ProviderName
 
 if TYPE_CHECKING:
@@ -35,14 +36,69 @@ def save_provider_account(
     provider_name: str,
     login: str,
     password: str,
+    pin: str | None = None,
+    vkorg: str | None = None,
+    kunnr_rg: str | None = None,
+    program: str | None = None,
+    kunnr_za: str | None = None,
+    incoterms: int | None = None,
+    vbeln: str | None = None,
 ) -> ProviderAccount:
     account, _created = ProviderAccount.objects.get_or_create(
         user=user, provider_name=provider_name
     )
     account.login = login
     account.set_password(password)
-    account.save(update_fields=["login", "encrypted_password", "updated_at"])
+    account.pin = pin
+    account.vkorg = vkorg
+    account.kunnr_rg = kunnr_rg
+    account.program = program
+    account.kunnr_za = kunnr_za
+    account.incoterms = incoterms
+    account.vbeln = vbeln
+    account.save(
+        update_fields=[
+            "login",
+            "encrypted_password",
+            "pin",
+            "vkorg",
+            "kunnr_rg",
+            "program",
+            "kunnr_za",
+            "incoterms",
+            "vbeln",
+            "updated_at",
+        ]
+    )
     return account
+
+
+def update_armtek_account_context(account: ProviderAccount) -> ArmtekProfile:
+    """Fetch vkorg/kunnr/etc from Armtek and persist on the account."""
+    profile = fetch_armtek_profile(
+        base_url=settings.ARMTEK_BASE_URL,
+        timeout=float(settings.ARMTEK_TIMEOUT),
+        login=account.login,
+        password=account.password or "",
+    )
+    account.vkorg = profile.vkorg
+    account.kunnr_rg = profile.kunnr_rg
+    account.program = profile.program
+    account.kunnr_za = profile.kunnr_za
+    account.incoterms = profile.incoterms
+    account.vbeln = profile.vbeln
+    account.save(
+        update_fields=[
+            "vkorg",
+            "kunnr_rg",
+            "program",
+            "kunnr_za",
+            "incoterms",
+            "vbeln",
+            "updated_at",
+        ]
+    )
+    return profile
 
 
 def get_provider_account(*, user: Any, provider_name: str) -> Optional[ProviderAccount]:
@@ -55,33 +111,21 @@ def get_provider_account(*, user: Any, provider_name: str) -> Optional[ProviderA
 def resolve_armtek_credentials(
     user: Any | None = None,
 ) -> Optional[ArmtekCredentials]:
-    login = settings.ARMTEK_LOGIN
-    password = settings.ARMTEK_PASSWORD
-    pin = settings.ARMTEK_PIN
-    vkorg = settings.ARMTEK_VKORG
-    kunnr_rg = settings.ARMTEK_KUNNR_RG
-    program = settings.ARMTEK_PROGRAM
-    kunnr_za = settings.ARMTEK_KUNNR_ZA
-    incoterms = settings.ARMTEK_INCOTERMS
-    vbeln = settings.ARMTEK_VBELN
+    if user is None:
+        return None
 
-    if user is not None:
-        account = get_provider_account(user=user, provider_name=ProviderName.ARMTEK)
-        if account and account.password:
-            login = account.login
-            password = account.password
-
-    if not login or not password:
+    account = get_provider_account(user=user, provider_name=ProviderName.ARMTEK)
+    if account is None or not account.password:
         return None
 
     return ArmtekCredentials(
-        login=login,
-        password=password,
-        pin=pin,
-        vkorg=vkorg,
-        kunnr_rg=kunnr_rg,
-        program=program,
-        kunnr_za=kunnr_za,
-        incoterms=incoterms,
-        vbeln=vbeln,
+        login=account.login,
+        password=account.password,
+        pin=account.pin,
+        vkorg=account.vkorg,
+        kunnr_rg=account.kunnr_rg,
+        program=account.program,
+        kunnr_za=account.kunnr_za,
+        incoterms=account.incoterms,
+        vbeln=account.vbeln,
     )

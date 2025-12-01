@@ -54,7 +54,7 @@ const route = useRoute();
 
 const onSearch = async ({ value }) => {
   if (!value.trim()) {
-    error.value = 'Введите хотя бы один артикул или бренд.';
+    error.value = 'Введите артикул и бренд в формате PIN_BRAND.';
     return;
   }
   loading.value = true;
@@ -105,6 +105,7 @@ const requestDetails = async () => {
     });
     helperMessage.value =
       'Мы поставили товары в очередь. Расширение откроет вкладки Armtek, считает характеристики и вернёт их в таблицу.';
+    await openArmtekQueueSequential();
     startPolling();
   } catch (err) {
     error.value =
@@ -137,6 +138,61 @@ const pollOnce = async () => {
     products.value = products.value.map((p) => (map.has(p.id) ? map.get(p.id) : p));
   } catch {
     helperMessage.value = 'Не удалось обновить статусы. Попробуйте обновить страницу или повторить позже.';
+  }
+};
+
+let openingQueue = false;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForDetails = async (requestId, timeoutMs = 120000) => {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const { data } = await ProductApi.pollStatus([requestId]);
+      const entry = Array.isArray(data) ? data.find((p) => p.request_id === requestId) : null;
+      if (entry && entry.details_status === 'ready') {
+        const map = new Map((data || []).map((item) => [item.id, item]));
+        products.value = products.value.map((p) => (map.has(p.id) ? map.get(p.id) : p));
+        return 'ready';
+      }
+    } catch (err) {
+      return err.response?.data?.detail || 'error';
+    }
+    await delay(3000);
+  }
+  return 'timeout';
+};
+
+const openArmtekQueueSequential = async () => {
+  if (openingQueue) return;
+  openingQueue = true;
+  try {
+    while (true) {
+      const { data } = await ProductApi.jobs(1);
+      if (!Array.isArray(data) || data.length === 0) {
+        helperMessage.value =
+          'Очередь характеристик пуста — если товары ещё без характеристик, попробуйте нажать «Получить характеристики товаров» снова.';
+        break;
+      }
+      const job = data[0];
+      if (job.open_url) {
+        window.open(job.open_url, '_blank', 'noopener,noreferrer');
+      }
+      const result = await waitForDetails(job.request_id);
+      if (result === 'timeout') {
+        helperMessage.value = 'Таймаут ожидания расширения. Остановили очередь.';
+        break;
+      }
+      if (result === 'error') {
+        helperMessage.value = 'Ошибка при опросе статуса. Остановили очередь.';
+        break;
+      }
+    }
+  } catch (err) {
+    helperMessage.value =
+      err.response?.data?.detail || 'Не удалось открыть страницы Armtek для чтения характеристик.';
+  } finally {
+    openingQueue = false;
   }
 };
 

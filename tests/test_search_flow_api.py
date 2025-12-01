@@ -18,7 +18,7 @@ def test_stub_search_and_details_flow(settings):
     # search via Armtek proxy (stubbed)
     resp = client.post(
         "/api/v1/providers/armtek/search",
-        {"query": "1234"},
+        {"query": "1234_KYB"},
         content_type="application/json",
         **headers,
     )
@@ -73,7 +73,7 @@ def test_search_history_list(settings):
 
     search_resp = client.post(
         "/api/v1/search/bulk",
-        {"bulk_text": "1234"},
+        {"bulk_text": "1234_KYB"},
         content_type="application/json",
         **headers,
     )

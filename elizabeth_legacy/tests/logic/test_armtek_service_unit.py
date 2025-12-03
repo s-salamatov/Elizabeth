@@ -1,5 +1,5 @@
-from elizabeth.backend.models.search_result import SearchItem
-from elizabeth.backend.services.armtek.service import ArmtekService
+from backend.backend.models.search_result import SearchItem
+from backend.backend.services.armtek.service import ArmtekService
 
 
 class DummyArmtekClient:

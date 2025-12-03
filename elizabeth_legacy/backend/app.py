@@ -9,18 +9,18 @@ from pathlib import Path
 from flask import Flask, render_template
 from flask.typing import ResponseReturnValue
 
-from elizabeth.backend.api.characteristics_api import characteristics_bp
-from elizabeth.backend.api.health_api import health_bp
-from elizabeth.backend.api.search_api import search_bp
-from elizabeth.backend.config import ArmtekConfig
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.api.characteristics_api import characteristics_bp
+from backend.backend.api.health_api import health_bp
+from backend.backend.api.search_api import search_bp
+from backend.backend.config import ArmtekConfig
+from backend.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
     InMemoryArmtekCharacteristicsRepository,
 )
-from elizabeth.backend.services.armtek.client import ArmtekClient
-from elizabeth.backend.services.armtek.service import ArmtekService
-from elizabeth.backend.services.tokens import ArmtekSearchContext
-from elizabeth.backend.utils.validation import parse_optional_int
+from backend.backend.services.armtek.client import ArmtekClient
+from backend.backend.services.armtek.service import ArmtekService
+from backend.backend.services.tokens import ArmtekSearchContext
+from backend.backend.utils.validation import parse_optional_int
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 

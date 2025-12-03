@@ -3,14 +3,14 @@ from decimal import Decimal
 
 import pytest
 
-from elizabeth.backend.api.search_api import parse_query
-from elizabeth.backend.app import create_app
-from elizabeth.backend.models.search_result import SearchItem
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.api.search_api import parse_query
+from backend.backend.app import create_app
+from backend.backend.models.search_result import SearchItem
+from backend.backend.repositories.characteristics_repository import (
     InMemoryArmtekCharacteristicsRepository,
 )
-from elizabeth.backend.services.armtek.exceptions import ArmtekError
-from elizabeth.backend.services.tokens import (
+from backend.backend.services.armtek.exceptions import ArmtekError
+from backend.backend.services.tokens import (
     ArmtekSearchContext,
     generate_characteristics_token,
 )

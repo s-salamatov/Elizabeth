@@ -5,11 +5,11 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Any, Iterable, Optional, Protocol, Type
 
-from elizabeth.backend.config import ArmtekConfig
-from elizabeth.backend.models.characteristics import ProductHtmlDetails
-from elizabeth.backend.models.search_result import SearchItem
-from elizabeth.backend.services.armtek.client import ArmtekClient
-from elizabeth.backend.services.tokens import ArmtekSearchContext
+from backend.backend.config import ArmtekConfig
+from backend.backend.models.characteristics import ProductHtmlDetails
+from backend.backend.models.search_result import SearchItem
+from backend.backend.services.armtek.client import ArmtekClient
+from backend.backend.services.tokens import ArmtekSearchContext
 
 
 class ArmtekProductParser(Protocol):

@@ -1,6 +1,6 @@
 import pytest
 
-from elizabeth.apps.search.parsers import split_bulk_input, split_pin_and_brand
+from backend.apps.search.parsers import split_bulk_input, split_pin_and_brand
 
 
 def test_split_pin_and_brand_requires_underscore_and_brand():

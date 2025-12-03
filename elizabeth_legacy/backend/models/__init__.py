@@ -1,8 +1,8 @@
-from elizabeth.backend.models.characteristics import (
+from backend.backend.models.characteristics import (
     CharacteristicsRecord,
     ProductHtmlDetails,
 )
-from elizabeth.backend.models.search_result import (
+from backend.backend.models.search_result import (
     Buyer,
     ClientStructure,
     Contract,

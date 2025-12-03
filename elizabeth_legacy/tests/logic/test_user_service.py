@@ -1,18 +1,18 @@
 import pytest
 
-from elizabeth.backend.models.search_result import (
+from backend.backend.models.search_result import (
     Buyer,
     Contract,
     DeliveryAddress,
     PickupPoint,
     Vkorg,
 )
-from elizabeth.backend.services.armtek.exceptions import (
+from backend.backend.services.armtek.exceptions import (
     ArmtekHttpError,
     ArmtekResponseFormatError,
     ArmtekStatusError,
 )
-from elizabeth.backend.services.armtek.user import UserService
+from backend.backend.services.armtek.user import UserService
 
 
 class DummyHttpClient:

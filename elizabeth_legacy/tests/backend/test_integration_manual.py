@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from elizabeth import ArmtekClient, ArmtekConfig
+from backend import ArmtekClient, ArmtekConfig
 
 
 def _env(var: str) -> str | None:

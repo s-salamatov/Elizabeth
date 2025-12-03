@@ -3,8 +3,8 @@
 Elizabeth — новая реализация на Django + Django REST Framework. API v1 — единственная точка для веб-UI, браузерного расширения и будущих клиентов.
 
 ## Кратко о слоях
-- `elizabeth/elizabeth/settings/` — base/dev/prod конфигурации.
-- `elizabeth/apps/` — доменные приложения:
+- `backend/elizabeth/settings/` — base/dev/prod конфигурации.
+- `backend/apps/` — доменные приложения:
   - `accounts` — JWT-логин/регистрация, пользовательские настройки.
   - `providers` — учётки провайдеров, Armtek credentials, Armtek proxy search.
   - `products` — товары, детали, заявки на детали (`request_id`).
@@ -23,8 +23,8 @@ python manage.py runserver 0.0.0.0:8000
 Переменные окружения (dev): см. `.env` пример; ключевые — `ARMTEK_ENABLE_STUB=1` чтобы демо работало без кредов.
 
 ### SPA-фронтенд (Vue 3 + Vite)
-- Исходники: `frontend_spa/`, билд кладётся в `elizabeth/apps/frontend/static/frontend/`.
-- Установка зависимостей: `cd frontend_spa && npm install`.
+- Исходники: `frontend/`, билд кладётся в `backend/apps/frontend/static/frontend/`.
+- Установка зависимостей: `cd frontend && npm install`.
 - Запуск dev-сервера: `npm run dev` (раздаёт `index.html`, но в проде используется Django-шаблон `frontend/app.html`).
 - Продакшн сборка: `npm run build`, затем `python manage.py collectstatic` при необходимости.
 - Страница приложения доступна по `/`, монтируется в `<div id="app"></div>` и работает только с REST API `/api/v1/...`.

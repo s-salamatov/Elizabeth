@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from elizabeth.backend.models.characteristics import ProductHtmlDetails
+from backend.backend.models.characteristics import ProductHtmlDetails
 
 
 class ArmtekParserAdapter:

@@ -23,6 +23,6 @@ db.sqlite3
 
 # Node / frontend
 node_modules/
-frontend_spa/node_modules/
-frontend_spa/.vite/
+frontend/node_modules/
+frontend/.vite/
 npm-debug.log*

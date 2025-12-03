@@ -1,8 +1,8 @@
 # Repository Guidelines
 
 ## Project Structure (Django)
-- `elizabeth/elizabeth/settings/` — base/dev/prod configs.
-- `elizabeth/apps/`:
+- `backend/elizabeth/settings/` — base/dev/prod configs.
+- `backend/apps/`:
   - `accounts` — auth endpoints (SimpleJWT), user settings.
   - `providers` — provider accounts (encrypted), Armtek credentials endpoint, Armtek search proxy.
   - `products` — Product, ProductDetails, ProductDetailsRequest (UUID `request_id`), ingest/status/jobs endpoints.
@@ -23,7 +23,7 @@
 ## Coding Style
 - Python 3.12, black + isort; flake8 with bugbear/comprehensions; mypy strict with django/drf plugins.
 - Keep business-логика в сервисах, DRF views тонкие. Не подавлять линтеры без крайней необходимости.
-- Absolute imports `elizabeth.apps.*`.
+- Absolute imports `backend.apps.*`.
 
 ## Testing Guidelines
 - `pytest` (unit/API). Сетевые интеграции — только со stub или при наличии реальных кредов.

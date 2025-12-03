@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, Optional
 
-from elizabeth.backend.models.characteristics import CharacteristicsRecord
+from backend.backend.models.characteristics import CharacteristicsRecord
 
 
 class ArmtekCharacteristicsRepository:

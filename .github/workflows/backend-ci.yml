@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '**/*.py'
-      - 'elizabeth/**'
+      - 'backend/**'
       - 'extensions/**'
       - 'scripts/**'
       - 'requirements.txt'
@@ -16,7 +16,7 @@ on:
   pull_request:
     paths:
       - '**/*.py'
-      - 'elizabeth/**'
+      - 'backend/**'
       - 'extensions/**'
       - 'scripts/**'
       - 'requirements.txt'
@@ -33,7 +33,7 @@ jobs:
       matrix:
         python-version: ['3.12']
     env:
-      DJANGO_SETTINGS_MODULE: elizabeth.elizabeth.settings.dev
+      DJANGO_SETTINGS_MODULE: backend.elizabeth.settings.dev
 
     steps:
       - name: Checkout

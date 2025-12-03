@@ -1,7 +1,7 @@
 import pytest
 
-from elizabeth.apps.products.models import DetailsRequestStatus, Product
-from elizabeth.apps.products.services import (
+from backend.apps.products.models import DetailsRequestStatus, Product
+from backend.apps.products.services import (
     ensure_details_request,
     mark_requests_pending,
 )

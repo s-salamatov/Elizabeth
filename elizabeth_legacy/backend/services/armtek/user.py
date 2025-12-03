@@ -4,7 +4,7 @@ from typing import Any, List, Sequence
 
 from pydantic import ValidationError
 
-from elizabeth.backend.models.search_result import (
+from backend.backend.models.search_result import (
     Buyer,
     ClientStructure,
     Contract,
@@ -12,11 +12,11 @@ from elizabeth.backend.models.search_result import (
     PickupPoint,
     Vkorg,
 )
-from elizabeth.backend.services.armtek.base import extract_array, unwrap_resp
-from elizabeth.backend.services.armtek.exceptions import ArmtekResponseFormatError
-from elizabeth.backend.services.armtek.http import ArmtekHttpClient
-from elizabeth.backend.utils.logger import get_logger
-from elizabeth.backend.utils.validation import (
+from backend.backend.services.armtek.base import extract_array, unwrap_resp
+from backend.backend.services.armtek.exceptions import ArmtekResponseFormatError
+from backend.backend.services.armtek.http import ArmtekHttpClient
+from backend.backend.utils.logger import get_logger
+from backend.backend.utils.validation import (
     ensure_mapping,
     ensure_sequence,
     first_value,

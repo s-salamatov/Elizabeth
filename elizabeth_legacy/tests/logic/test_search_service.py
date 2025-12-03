@@ -1,12 +1,12 @@
 import pytest
 
-from elizabeth.backend.models.search_result import SearchItem
-from elizabeth.backend.services.armtek.exceptions import (
+from backend.backend.models.search_result import SearchItem
+from backend.backend.services.armtek.exceptions import (
     ArmtekHttpError,
     ArmtekResponseFormatError,
     ArmtekStatusError,
 )
-from elizabeth.backend.services.armtek.search import SearchService
+from backend.backend.services.armtek.search import SearchService
 
 
 class DummyHttpClient:

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent
-FRONTEND_DIR = REPO_ROOT / "frontend_spa"
+FRONTEND_DIR = REPO_ROOT / "frontend"
 
 
 def run_cmd(
@@ -20,10 +20,21 @@ def run_cmd(
 
 def main() -> None:
     env = os.environ.copy()
-    env.setdefault("DJANGO_SETTINGS_MODULE", "elizabeth.elizabeth.settings.dev")
+    env.setdefault("DJANGO_SETTINGS_MODULE", "backend.elizabeth.settings.dev")
 
-    venv_python = REPO_ROOT / ".venv" / "bin" / "python"
-    python_bin = str(venv_python if venv_python.exists() else Path(sys.executable))
+    venv_dir = REPO_ROOT / ".venv"
+    venv_python = venv_dir / "bin" / "python"
+    if not venv_python.exists():
+        print("→ Creating virtual environment (.venv)")
+        run_cmd([sys.executable, "-m", "venv", str(venv_dir)], env=env)
+    python_bin = str(venv_python)
+
+    # Install backend dependencies (includes django-phonenumber-field)
+    run_cmd(
+        [python_bin, "-m", "pip", "install", "-U", "pip", "setuptools", "wheel"],
+        env=env,
+    )
+    run_cmd([python_bin, "-m", "pip", "install", "-r", "requirements.txt"], env=env)
 
     run_cmd(["npm", "ci"], cwd=FRONTEND_DIR, env=env)
     run_cmd(["npm", "run", "build"], cwd=FRONTEND_DIR, env=env)

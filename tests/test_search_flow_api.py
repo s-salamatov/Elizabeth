@@ -8,7 +8,12 @@ def test_stub_search_and_details_flow(settings):
     client = Client()
 
     # register + login
-    creds = {"username": "flowuser", "password": "StrongPass123"}
+    creds = {
+        "email": "flowuser@example.com",
+        "password": "StrongPass123",
+        "phone_number": "+79000000002",
+        "country": "RU",
+    }
     client.post("/api/v1/auth/register", creds, content_type="application/json")
     login = client.post("/api/v1/auth/login", creds, content_type="application/json")
     token = login.json()["tokens"]["access"]
@@ -65,7 +70,12 @@ def test_search_history_list(settings):
     settings.ARMTEK_ENABLE_STUB = True
     client = Client()
 
-    creds = {"username": "historyuser", "password": "StrongPass123"}
+    creds = {
+        "email": "historyuser@example.com",
+        "password": "StrongPass123",
+        "phone_number": "+79000000003",
+        "country": "RU",
+    }
     client.post("/api/v1/auth/register", creds, content_type="application/json")
     login = client.post("/api/v1/auth/login", creds, content_type="application/json")
     token = login.json()["tokens"]["access"]

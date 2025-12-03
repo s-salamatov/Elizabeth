@@ -5,12 +5,12 @@ from typing import Any, Dict, Optional, Type, cast
 
 import httpx
 
-from elizabeth.backend.config import ArmtekConfig
-from elizabeth.backend.services.armtek.exceptions import (
+from backend.backend.config import ArmtekConfig
+from backend.backend.services.armtek.exceptions import (
     ArmtekHttpError,
     ArmtekResponseFormatError,
 )
-from elizabeth.backend.utils.logger import get_logger
+from backend.backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

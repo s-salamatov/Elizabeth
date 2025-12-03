@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from elizabeth.backend.utils.validation import (
+from backend.backend.utils.validation import (
     parse_bool_flag,
     parse_datetime_value,
     parse_decimal_value,

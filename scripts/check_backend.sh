@@ -10,7 +10,7 @@ if [ -d "${ROOT_DIR}/.venv" ]; then
   source "${ROOT_DIR}/.venv/bin/activate"
 fi
 
-export DJANGO_SETTINGS_MODULE="elizabeth.elizabeth.settings.dev"
+export DJANGO_SETTINGS_MODULE="backend.elizabeth.settings.dev"
 export PYTHONPATH="${PYTHONPATH:-}:${ROOT_DIR}"
 
 echo "[backend] Running Django migrations..."
@@ -23,10 +23,10 @@ echo "[backend] Running black..."
 black --check .
 
 echo "[backend] Running isort..."
-isort --check-only . --skip node_modules --skip frontend_spa/node_modules --skip .venv
+isort --check-only . --skip node_modules --skip frontend/node_modules --skip .venv
 
 echo "[backend] Running flake8..."
-flake8 . --exclude node_modules,frontend_spa/node_modules,.venv
+flake8 . --exclude node_modules,frontend/node_modules,.venv
 
 echo "[backend] Running mypy..."
 mypy .

@@ -1,5 +1,5 @@
-from elizabeth.backend import services as backend_services
-from elizabeth.backend.config import ArmtekConfig
+from backend.backend import services as backend_services
+from backend.backend.config import ArmtekConfig
 
 ArmtekClient = backend_services.ArmtekClient
 ArmtekError = backend_services.ArmtekError

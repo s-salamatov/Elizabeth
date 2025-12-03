@@ -1,7 +1,0 @@
-from . import base
-
-DEBUG = False
-ALLOWED_HOSTS = base.ALLOWED_HOSTS or ["localhost"]
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

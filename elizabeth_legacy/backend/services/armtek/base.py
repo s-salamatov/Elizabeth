@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence, cast
 
-from elizabeth.backend.services.armtek.exceptions import (
+from backend.backend.services.armtek.exceptions import (
     ArmtekResponseFormatError,
     ArmtekStatusError,
 )

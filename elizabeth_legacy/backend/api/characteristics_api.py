@@ -3,8 +3,8 @@ from __future__ import annotations
 from flask import Blueprint, Response, current_app, jsonify, request
 from flask.typing import ResponseReturnValue
 
-from elizabeth.backend.api.deps import get_characteristics_repo
-from elizabeth.backend.utils.validation import parse_optional_str
+from backend.backend.api.deps import get_characteristics_repo
+from backend.backend.utils.validation import parse_optional_str
 
 characteristics_bp = Blueprint("characteristics_api", __name__)
 

@@ -1,4 +1,4 @@
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
     InMemoryArmtekCharacteristicsRepository,
 )

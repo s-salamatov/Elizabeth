@@ -4,11 +4,11 @@ from typing import cast
 
 from flask import current_app
 
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
 )
-from elizabeth.backend.services.armtek.service import ArmtekService
-from elizabeth.backend.services.tokens import ArmtekSearchContext
+from backend.backend.services.armtek.service import ArmtekService
+from backend.backend.services.tokens import ArmtekSearchContext
 
 
 def get_armtek_service() -> ArmtekService:

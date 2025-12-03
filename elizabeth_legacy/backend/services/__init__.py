@@ -1,5 +1,5 @@
-from elizabeth.backend.services import armtek as armtek_services
-from elizabeth.backend.services.tokens import (
+from backend.backend.services import armtek as armtek_services
+from backend.backend.services.tokens import (
     ArmtekSearchContext,
     generate_api_token,
     generate_characteristics_token,

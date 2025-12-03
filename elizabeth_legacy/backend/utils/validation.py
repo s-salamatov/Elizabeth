@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Iterable, Mapping, Sequence
 
-from elizabeth.backend.services.armtek.exceptions import ArmtekResponseFormatError
+from backend.backend.services.armtek.exceptions import ArmtekResponseFormatError
 
 logger = logging.getLogger(__name__)
 

@@ -7,22 +7,22 @@ from typing import Any
 from flask import Blueprint, jsonify, request
 from flask.typing import ResponseReturnValue
 
-from elizabeth.backend.api.deps import (
+from backend.backend.api.deps import (
     get_armtek_service,
     get_characteristics_repo,
     get_search_context,
 )
-from elizabeth.backend.models.search_result import SearchItem
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.models.search_result import SearchItem
+from backend.backend.repositories.characteristics_repository import (
     ArmtekCharacteristicsRepository,
 )
-from elizabeth.backend.services.armtek.exceptions import ArmtekError
-from elizabeth.backend.services.tokens import (
+from backend.backend.services.armtek.exceptions import ArmtekError
+from backend.backend.services.tokens import (
     ArmtekSearchContext,
     generate_api_token,
     generate_characteristics_token,
 )
-from elizabeth.backend.utils.logger import get_logger
+from backend.backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

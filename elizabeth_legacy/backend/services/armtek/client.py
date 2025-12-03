@@ -3,11 +3,11 @@ from __future__ import annotations
 from types import TracebackType
 from typing import Dict, List, Optional, Type
 
-from elizabeth.backend.config import ArmtekConfig
-from elizabeth.backend.models.search_result import ClientStructure, SearchItem, Vkorg
-from elizabeth.backend.services.armtek.http import ArmtekHttpClient
-from elizabeth.backend.services.armtek.search import SearchService
-from elizabeth.backend.services.armtek.user import UserService
+from backend.backend.config import ArmtekConfig
+from backend.backend.models.search_result import ClientStructure, SearchItem, Vkorg
+from backend.backend.services.armtek.http import ArmtekHttpClient
+from backend.backend.services.armtek.search import SearchService
+from backend.backend.services.armtek.user import UserService
 
 
 class ArmtekClient:

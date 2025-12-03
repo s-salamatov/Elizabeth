@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
-from elizabeth.backend.repositories.characteristics_repository import (
+from backend.backend.repositories.characteristics_repository import (
     InMemoryArmtekCharacteristicsRepository,
 )
-from elizabeth.backend.services.tokens import (
+from backend.backend.services.tokens import (
     ArmtekSearchContext,
     generate_api_token,
     generate_characteristics_token,

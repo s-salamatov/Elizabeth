@@ -1,11 +1,11 @@
-from elizabeth.backend.config import ArmtekConfig
-from elizabeth.backend.models.search_result import (
+from backend.backend.config import ArmtekConfig
+from backend.backend.models.search_result import (
     Buyer,
     ClientStructure,
     DeliveryAddress,
     PickupPoint,
 )
-from elizabeth.backend.services.armtek.client import ArmtekClient
+from backend.backend.services.armtek.client import ArmtekClient
 
 
 class DummyUserService:

@@ -64,6 +64,13 @@
 
   const normalizeLabel = (text) => (text || '').replace(/\s+/g, ' ').replace(/:/g, '').trim().toLowerCase();
 
+  const parseNumber = (text) => {
+    if (!text) return null;
+    const normalized = String(text).replace(',', '.');
+    const match = normalized.match(/-?\d+(?:\.\d+)?/);
+    return match ? parseFloat(match[0]) : null;
+  };
+
   const findPropValue = (doc, targets) => {
     const container = getPropsContainer(doc);
     if (!container) return null;
@@ -84,13 +91,20 @@
     return null;
   };
 
-  const extractAdditionalCharacteristics = (doc) => ({
-    weight: findPropValue(doc, ['вес', 'вес в индивидуальной упаковке', 'вес в инд']),
-    length: findPropValue(doc, ['длина']),
-    height: findPropValue(doc, ['высота']),
-    width: findPropValue(doc, ['ширина']),
-    analog_code: findPropValue(doc, ['код аналога']),
-  });
+  const extractAdditionalCharacteristics = (doc) => {
+    const weightRaw = findPropValue(doc, ['вес', 'вес в индивидуальной упаковке', 'вес в инд']);
+    const lengthRaw = findPropValue(doc, ['длина']);
+    const heightRaw = findPropValue(doc, ['высота']);
+    const widthRaw = findPropValue(doc, ['ширина']);
+    const analogRaw = findPropValue(doc, ['код аналога']);
+    return {
+      weight: parseNumber(weightRaw),
+      length: parseNumber(lengthRaw),
+      height: parseNumber(heightRaw),
+      width: parseNumber(widthRaw),
+      analog_code: analogRaw ? analogRaw.trim() : null,
+    };
+  };
 
   const waitForProductPage = async () => {
     const start = Date.now();
@@ -106,14 +120,13 @@
 
   const sendCharacteristicsToBackend = async (imageUrl, extra) => {
     const artid = extractArtidFromPath(window.location.pathname);
-    const payload = {
-      image_url: imageUrl || null,
-      weight: extra.weight ?? null,
-      length: extra.length ?? null,
-      height: extra.height ?? null,
-      width: extra.width ?? null,
-      analog_code: extra.analog_code ?? null,
-    };
+    const payload = {};
+    if (imageUrl) payload.image_url = imageUrl;
+    if (extra.weight !== null) payload.weight = extra.weight;
+    if (extra.length !== null) payload.length = extra.length;
+    if (extra.height !== null) payload.height = extra.height;
+    if (extra.width !== null) payload.width = extra.width;
+    if (extra.analog_code) payload.analog_code = extra.analog_code;
 
     const resp = await fetch(INGEST_ENDPOINT(productId, requestId), {
       method: 'POST',

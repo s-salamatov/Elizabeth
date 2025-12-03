@@ -55,6 +55,7 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
     details = ProductDetailsSerializer(read_only=True)
     details_status = serializers.SerializerMethodField()
     request_id = serializers.SerializerMethodField()
+    details_error = serializers.SerializerMethodField()
     search_request_id = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -94,6 +95,7 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
             "fetched_at",
             "details",
             "details_status",
+            "details_error",
             "request_id",
         ]
 
@@ -106,5 +108,11 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
     def get_request_id(self, obj: Product) -> str | None:
         try:
             return str(obj.details_request.request_id)
+        except ProductDetailsRequest.DoesNotExist:
+            return None
+
+    def get_details_error(self, obj: Product) -> str | None:
+        try:
+            return obj.details_request.last_error or None
         except ProductDetailsRequest.DoesNotExist:
             return None

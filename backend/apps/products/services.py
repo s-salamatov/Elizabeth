@@ -142,7 +142,7 @@ def update_product_details(product: Product, *, data: dict[str, Any]) -> Product
             setattr(details, field, data[field])
     details.fetched_at = timezone.now()
     details.save()
-    _set_details_request_status(product, DetailsRequestStatus.READY)
+    _set_details_request_status(product, DetailsRequestStatus.READY, error=None)
     return details
 
 
@@ -152,8 +152,15 @@ def ensure_details_request(product: Product) -> ProductDetailsRequest:
         defaults={
             "request_id": uuid4(),
             "status": DetailsRequestStatus.PENDING,
+            "last_error": "",
         },
     )
+    if created:
+        return request
+    # When reusing an existing request for a new run, drop stale error text
+    if request.last_error:
+        request.last_error = ""
+        request.save(update_fields=["last_error", "updated_at"])
     return request
 
 
@@ -162,18 +169,27 @@ def mark_requests_pending(products: list[Product]) -> list[ProductDetailsRequest
     requests: list[ProductDetailsRequest] = []
     for product in products:
         req = ensure_details_request(product)
-        if req.status != DetailsRequestStatus.PENDING:
+        if req.status != DetailsRequestStatus.PENDING or req.last_error:
             req.status = DetailsRequestStatus.PENDING
-            req.save(update_fields=["status", "updated_at"])
+            req.last_error = ""
+            req.save(update_fields=["status", "last_error", "updated_at"])
         requests.append(req)
     return requests
 
 
-def _set_details_request_status(product: Product, status: DetailsRequestStatus) -> None:
+def _set_details_request_status(
+    product: Product, status: DetailsRequestStatus, *, error: str | None = None
+) -> None:
     try:
         req = product.details_request
     except ProductDetailsRequest.DoesNotExist:
         req = ensure_details_request(product)
+    changed = False
     if req.status != status:
         req.status = status
-        req.save(update_fields=["status", "updated_at"])
+        changed = True
+    if error is not None and error != req.last_error:
+        req.last_error = error
+        changed = True
+    if changed:
+        req.save(update_fields=["status", "last_error", "updated_at"])

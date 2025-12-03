@@ -5,7 +5,7 @@
         <div>
           <h5 class="card-title mb-1">Результаты поиска</h5>
           <p class="text-muted mb-0">
-            <span v-if="products.length">Найдено {{ products.length }} товаров. Получите характеристики, чтобы увидеть фото, цену и наличие.</span>
+            <span v-if="products.length">Найдено {{ products.length }} товаров. Получите характеристики, чтобы увидеть фото, размеры и аналоги.</span>
             <span v-else>Результатов пока нет. Введите артикулы и нажмите «Найти».</span>
           </p>
         </div>
@@ -20,73 +20,66 @@
           </button>
         </div>
       </div>
+
       <div v-if="products.length === 0" class="empty-state">
         Результатов пока нет. Введите артикулы и нажмите «Найти».
       </div>
-      <div v-else>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
+
+      <template v-else>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <span class="badge text-bg-success" v-if="summary.ready">Готово: {{ summary.ready }}</span>
+          <span class="badge text-bg-info" v-if="summary.pending">В обработке: {{ summary.pending }}</span>
+          <span class="badge text-bg-danger" v-if="summary.failed">Ошибка: {{ summary.failed }}</span>
+          <span class="badge text-bg-secondary" v-if="summary.idle">Ожидание: {{ summary.idle }}</span>
+        </div>
+
+        <div class="table-responsive wide-table">
+          <table class="table table-sm table-hover align-middle mb-0">
             <thead>
               <tr>
-                <th>Артикул</th>
-                <th>Бренд</th>
-                <th>Наименование</th>
-                <th>Цена</th>
-                <th>Наличие</th>
-                <th>Доставка</th>
-                <th>Статус характеристик</th>
-                <th></th>
+                <th v-for="col in columns" :key="col.key" scope="col">{{ col.label }}</th>
               </tr>
             </thead>
             <tbody>
-              <template v-for="product in products" :key="product.id">
-                <tr>
-                  <td class="fw-semibold">{{ product.artid }}</td>
-                  <td>{{ product.brand }}</td>
-                  <td>{{ product.name }}</td>
-                  <td>{{ formatPrice(product) }}</td>
-                  <td>
-                    <span class="badge-pill muted-chip text-uppercase">{{ formatAvailability(product) }}</span>
-                  </td>
-                  <td>{{ formatDelivery(product) }}</td>
-                  <td>
-                    <span
-                      :class="statusClass(product.details_status)"
-                      :title="tooltipText(product.details_status)"
-                    >
+              <tr v-for="product in products" :key="product.id">
+                <td v-for="col in columns" :key="col.key" class="align-middle">
+                  <template v-if="col.key === 'artid'">
+                    <a :href="armtekUrl(product.artid)" target="_blank" rel="noopener" class="fw-semibold text-decoration-none">
+                      {{ product.artid }}
+                    </a>
+                  </template>
+                  <template v-else-if="col.key === 'details_status'">
+                    <span :class="statusClass(product.details_status)" :title="statusTooltip(product)">
                       <i :class="statusIcon(product.details_status)" class="me-1"></i>
                       {{ statusLabel(product.details_status) }}
                     </span>
-                  </td>
-                  <td class="text-end">
-                    <button class="btn btn-ghost btn-sm" type="button" @click="toggle(product.id)">
-                      <i :class="expanded.has(product.id) ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
-                    </button>
-                  </td>
-                </tr>
-                <tr v-if="expanded.has(product.id)" :key="`${product.id}-details`">
-                  <td colspan="8" class="bg-body-tertiary">
-                    <div class="detail-grid">
-                      <div
-                        v-for="entry in detailEntries(product)"
-                        :key="entry.label"
-                        class="detail-chip"
-                      >
-                        <span class="detail-label">{{ entry.label }}</span>
-                        <span class="detail-value">{{ entry.value }}</span>
-                      </div>
+                  </template>
+                  <template v-else-if="col.key === 'image_url'">
+                    <div v-if="product.details?.image_url" class="d-inline-flex align-items-center gap-2">
+                      <a :href="product.details.image_url" target="_blank" rel="noopener" class="fw-semibold">Открыть</a>
+                      <button class="btn btn-ghost btn-sm" type="button" @click="copyLink(product.details.image_url)" :title="copyHint">
+                        <i class="bi bi-clipboard"></i>
+                      </button>
                     </div>
-                  </td>
-                </tr>
-              </template>
+                    <span v-else class="text-muted">—</span>
+                  </template>
+                  <template v-else-if="detailKeys.includes(col.key)">
+                    {{ formatDetail(product.details, col.key) }}
+                  </template>
+                  <template v-else>
+                    {{ formatProduct(product, col.key) }}
+                  </template>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
         <div class="table-help mt-2">
           <i class="bi bi-arrows-expand"></i>
-          <span>На мобильных таблица скроллится по горизонтали.</span>
+          <span>Таблица тянется на всю ширину экрана и скроллится по горизонтали.</span>
         </div>
-      </div>
+      </template>
+
       <AlertMessage
         v-if="helperMessage"
         :message="helperMessage"
@@ -98,10 +91,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed } from 'vue';
 import AlertMessage from '../common/AlertMessage.vue';
 
-defineProps({
+const props = defineProps({
   products: { type: Array, default: () => [] },
   requesting: { type: Boolean, default: false },
   refreshing: { type: Boolean, default: false },
@@ -110,38 +103,53 @@ defineProps({
 
 const emit = defineEmits(['request-details', 'refresh']);
 
-const expanded = ref(new Set());
+const columns = [
+  { key: 'artid', label: 'Артикул' },
+  { key: 'brand', label: 'Бренд' },
+  { key: 'name', label: 'Наименование' },
+  { key: 'price', label: 'Цена' },
+  { key: 'available_quantity', label: 'Кол-во' },
+  { key: 'multiplicity', label: 'Кратн.' },
+  { key: 'minimum_order', label: 'Мин. партия' },
+  { key: 'supply_probability', label: 'Вероятность' },
+  { key: 'delivery_date', label: 'Доставка' },
+  { key: 'warehouse_partner', label: 'Склад партнёра' },
+  { key: 'warehouse_code', label: 'Склад Armtek' },
+  { key: 'return_days', label: 'Возврат, дн.' },
+  { key: 'import_flag', label: 'Импорт/ПРО' },
+  { key: 'special_flag', label: '713' },
+  { key: 'max_retail_price', label: 'Макс. розн.' },
+  { key: 'markup', label: 'Наценка' },
+  { key: 'importer_markup', label: 'Надбавка имп.' },
+  { key: 'producer_price', label: 'Цена производителя' },
+  { key: 'markup_rest_rub', label: 'Остаток надб., ₽' },
+  { key: 'markup_rest_percent', label: 'Остаток надб., %' },
+  { key: 'is_analog', label: 'Аналог' },
+  { key: 'note', label: 'Примечание' },
+  { key: 'details_status', label: 'Статус' },
+  { key: 'image_url', label: 'Фото' },
+  { key: 'weight', label: 'Вес, кг' },
+  { key: 'length', label: 'Длина, см' },
+  { key: 'width', label: 'Ширина, см' },
+  { key: 'height', label: 'Высота, см' },
+  { key: 'analog_code', label: 'Код аналога' },
+];
 
-const toggle = (id) => {
-  const next = new Set(expanded.value);
-  next.has(id) ? next.delete(id) : next.add(id);
-  expanded.value = next;
-};
+const detailKeys = ['image_url', 'weight', 'length', 'width', 'height', 'analog_code'];
 
-const detailEntries = (product) => {
-  const mapping = [
-    ['Код склада партнёра', product.warehouse_partner],
-    ['Код склада Armtek', product.warehouse_code],
-    ['Доступное количество', product.available_quantity],
-    ['Дней на возврат', product.return_days],
-    ['Кратность заказа', product.multiplicity],
-    ['Минимальная партия', product.minimum_order],
-    ['Вероятность поставки', formatProbability(product.supply_probability)],
-    ['Дата поставки', product.delivery_date],
-    ['Дата гарантии', product.warranty_date],
-    ['Признак Импорт/ПРО', product.import_flag],
-    ['Признак 713', product.special_flag],
-    ['Максимальная розн. цена', formatMoney(product.max_retail_price, product.currency)],
-    ['Наценка', formatMoney(product.markup, product.currency)],
-    ['Надбавка импортёра', formatMoney(product.importer_markup, product.currency)],
-    ['Отпускная цена производителя', formatMoney(product.producer_price, product.currency)],
-    ['Остаток надбавки (₽)', formatMoney(product.markup_rest_rub, product.currency)],
-    ['Остаток надбавки (%)', formatPercent(product.markup_rest_percent)],
-    ['Аналог', product.is_analog === null ? '—' : product.is_analog ? 'Да' : 'Нет'],
-    ['Примечание', product.note],
-  ];
-  return mapping.filter(([, value]) => value !== null && value !== undefined && value !== '');
-};
+const copyHint = 'Скопировать ссылку на фото';
+
+const summary = computed(() => {
+  const acc = { ready: 0, failed: 0, pending: 0, idle: 0 };
+  for (const p of props.products || []) {
+    acc[p.details_status] = (acc[p.details_status] || 0) + 1;
+  }
+  return acc;
+});
+
+const requestDetails = () => emit('request-details');
+
+const armtekUrl = (artid) => `https://etp.armtek.ru/artinfo/index/${encodeURIComponent(artid || '')}`;
 
 const statusClass = (status) => {
   switch (status) {
@@ -173,87 +181,145 @@ const statusLabel = (status) => {
       return 'получены';
     case 'failed':
       return 'ошибка';
-    default:
+    case 'pending':
       return 'ожидание';
-  }
-};
-
-const tooltipText = (status) => {
-  switch (status) {
-    case 'ready':
-      return 'Характеристики получены через расширение';
-    case 'failed':
-      return 'Ошибка при получении характеристик';
     default:
-      return 'В очереди или в процессе получения';
+      return '—';
   }
 };
 
-const requestDetails = () => emit('request-details');
-
-const formatPrice = (product) => {
-  if (product.price === null || product.price === undefined) return '—';
-  const currency = product.currency || '';
-  return `${product.price} ${currency}`.trim();
-};
-
-const formatAvailability = (product) => {
-  const qty = product.available_quantity ?? '—';
-  const warehouse = product.warehouse_code || product.warehouse_partner || '';
-  const multiplicity = product.multiplicity ? ` x${product.multiplicity}` : '';
-  return `${qty}${multiplicity}${warehouse ? ` • ${warehouse}` : ''}`.trim();
-};
-
-const formatDelivery = (product) => {
-  if (product.delivery_date) return product.delivery_date;
-  if (product.return_days !== null && product.return_days !== undefined)
-    return `${product.return_days} дн. на возврат`;
-  return '—';
-};
-
-const formatProbability = (value) => {
-  if (value === null || value === undefined) return null;
-  return `${value}%`;
+const statusTooltip = (product) => {
+  if (product.details_status === 'failed' && product.details_error) return product.details_error;
+  if (product.details_status === 'ready') return 'Характеристики получены через расширение';
+  return 'В очереди или в процессе получения';
 };
 
 const formatMoney = (value, currency = '') => {
-  if (value === null || value === undefined) return null;
-  return `${value} ${currency}`.trim();
+  if (value === null || value === undefined) return '—';
+  return `${value} ${currency || ''}`.trim();
 };
 
 const formatPercent = (value) => {
-  if (value === null || value === undefined) return null;
+  if (value === null || value === undefined) return '—';
   return `${value}%`;
+};
+
+const formatProduct = (product, key) => {
+  switch (key) {
+    case 'price':
+      return formatMoney(product.price, product.currency);
+    case 'available_quantity':
+      return product.available_quantity ?? '—';
+    case 'supply_probability':
+      return formatPercent(product.supply_probability);
+    case 'delivery_date':
+      return product.delivery_date || '—';
+    case 'max_retail_price':
+      return formatMoney(product.max_retail_price, product.currency);
+    case 'markup':
+      return formatMoney(product.markup, product.currency);
+    case 'importer_markup':
+      return formatMoney(product.importer_markup, product.currency);
+    case 'producer_price':
+      return formatMoney(product.producer_price, product.currency);
+    case 'markup_rest_rub':
+      return formatMoney(product.markup_rest_rub, product.currency);
+    case 'markup_rest_percent':
+      return formatPercent(product.markup_rest_percent);
+    case 'is_analog':
+      if (product.is_analog === null || product.is_analog === undefined) return '—';
+      return product.is_analog ? 'Да' : 'Нет';
+    default:
+      return product[key] ?? '—';
+  }
+};
+
+const formatDetail = (details = {}, key) => {
+  if (!details) return '—';
+  switch (key) {
+    case 'weight':
+      return details.weight ?? '—';
+    case 'length':
+      return details.length ?? '—';
+    case 'width':
+      return details.width ?? '—';
+    case 'height':
+      return details.height ?? '—';
+    case 'analog_code':
+      return details.analog_code || '—';
+    default:
+      return '—';
+  }
+};
+
+const copyLink = async (url) => {
+  try {
+    await navigator.clipboard.writeText(url);
+  } catch {
+    // fail silently; UI is light-weight
+  }
 };
 </script>
 
 <style scoped>
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-  padding: 12px 8px;
+.wide-table {
+  width: 100%;
+  overflow-x: auto;
 }
 
-.detail-chip {
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-  border: 1px solid #dfe3f0;
-  border-radius: 12px;
-  padding: 10px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+.wide-table table {
+  min-width: 1400px;
 }
 
-.detail-label {
-  display: block;
-  font-size: 12px;
-  color: #6c757d;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.detail-value {
-  display: block;
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-weight: 600;
-  color: #1f2937;
+  font-size: 12px;
+  color: #0f172a;
+}
+
+.status-pill.ready {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-pill.pending {
+  background: #e0f2fe;
+  color: #0ea5e9;
+}
+
+.status-pill.failed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill.idle {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.table-card {
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.table-help {
+  color: #6b7280;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>

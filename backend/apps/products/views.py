@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+from decimal import Decimal, InvalidOperation
 from typing import Any, List, cast
 from urllib.parse import quote
 
@@ -12,13 +14,14 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from backend.apps.products.models import Product
+from backend.apps.products.models import DetailsRequestStatus, Product
 from backend.apps.products.serializers import (
     ProductDetailsInputSerializer,
     ProductDetailsSerializer,
     ProductSerializer,
 )
 from backend.apps.products.services import (
+    _set_details_request_status,
     mark_requests_pending,
     update_product_details,
 )
@@ -56,14 +59,66 @@ class ProductDetailView(RetrieveAPIView[Product]):
 class ProductDetailsIngestView(APIView):
     permission_classes = [AllowAny]
 
+    NUMERIC_FIELDS = {
+        "weight": 3,
+        "length": 2,
+        "width": 2,
+        "height": 2,
+    }
+
+    @staticmethod
+    def _parse_decimal(value: Any, max_places: int) -> Decimal | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float, Decimal)):
+            try:
+                return Decimal(str(value))
+            except InvalidOperation:
+                return None
+        if not isinstance(value, str):
+            return None
+        normalized = value.replace(",", ".")
+        match = re.search(r"-?\d+(?:\.\d+)?", normalized)
+        if not match:
+            return None
+        try:
+            quant = Decimal(10) ** -max_places
+            return Decimal(match.group(0)).quantize(quant)
+        except InvalidOperation:
+            return None
+
+    def _normalize_payload(self, data: dict[str, Any]) -> dict[str, Any]:
+        cleaned: dict[str, Any] = {}
+        for key, value in data.items():
+            if isinstance(value, list) and len(value) == 1:
+                cleaned[key] = value[0]
+            else:
+                cleaned[key] = value
+        # numeric fields: try to extract number, silently drop if not parseable
+        for field, places in self.NUMERIC_FIELDS.items():
+            parsed = self._parse_decimal(cleaned.get(field), places)
+            if parsed is None:
+                cleaned.pop(field, None)
+            else:
+                cleaned[field] = parsed
+        # image_url: keep only valid http(s)
+        image_url = cleaned.get("image_url")
+        if image_url:
+            if not isinstance(image_url, str) or not image_url.lower().startswith(
+                ("http://", "https://")
+            ):
+                cleaned.pop("image_url", None)
+        # analog_code: strip whitespace
+        if "analog_code" in cleaned and isinstance(cleaned.get("analog_code"), str):
+            cleaned["analog_code"] = cleaned["analog_code"].strip()
+        return cleaned
+
     def post(
         self, request: Request, pk: int, *args: object, **kwargs: object
     ) -> Response:
         token = request.headers.get("X-Details-Token") or request.query_params.get(
             "request_id"
         )
-        serializer = ProductDetailsInputSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         try:
             product = Product.objects.get(pk=pk)
         except Product.DoesNotExist:
@@ -71,6 +126,9 @@ class ProductDetailsIngestView(APIView):
                 {"detail": "Product not found"}, status=status.HTTP_404_NOT_FOUND
             )
         if not token:
+            _set_details_request_status(
+                product, DetailsRequestStatus.FAILED, error="request_id is required"
+            )
             return Response(
                 {"detail": "request_id is required"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -80,10 +138,30 @@ class ProductDetailsIngestView(APIView):
             not getattr(product, "details_request", None)
             or str(product.details_request.request_id) != token
         ):
+            _set_details_request_status(
+                product, DetailsRequestStatus.FAILED, error="Invalid request_id"
+            )
             return Response(
                 {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
             )
-        details = update_product_details(product, data=serializer.validated_data)
+        normalized = self._normalize_payload(dict(request.data))
+        serializer = ProductDetailsInputSerializer(data=normalized)
+        if not serializer.is_valid():
+            error_text = str(serializer.errors)
+            _set_details_request_status(
+                product, DetailsRequestStatus.FAILED, error=error_text
+            )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            details = update_product_details(product, data=serializer.validated_data)
+        except Exception as exc:  # pragma: no cover - safety net for ingest path
+            _set_details_request_status(
+                product, DetailsRequestStatus.FAILED, error=str(exc)
+            )
+            return Response(
+                {"detail": "Failed to save details"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         return Response(
             ProductDetailsSerializer(details).data,
             status=status.HTTP_201_CREATED,

@@ -34,6 +34,39 @@ class Product(models.Model):
     pin = models.CharField(max_length=128)
     oem = models.CharField(max_length=128, blank=True)
     name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=18, decimal_places=4, null=True, blank=True)
+    currency = models.CharField(max_length=8, blank=True, null=True)
+    available_quantity = models.IntegerField(null=True, blank=True)
+    warehouse_partner = models.CharField(max_length=32, blank=True, null=True)
+    warehouse_code = models.CharField(max_length=32, blank=True, null=True)
+    return_days = models.IntegerField(null=True, blank=True)
+    multiplicity = models.IntegerField(null=True, blank=True)
+    minimum_order = models.IntegerField(null=True, blank=True)
+    supply_probability = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    delivery_date = models.CharField(max_length=32, blank=True, null=True)
+    warranty_date = models.CharField(max_length=32, blank=True, null=True)
+    import_flag = models.CharField(max_length=4, blank=True, null=True)
+    special_flag = models.CharField(max_length=4, blank=True, null=True)
+    max_retail_price = models.DecimalField(
+        max_digits=18, decimal_places=4, null=True, blank=True
+    )
+    markup = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    note = models.CharField(max_length=255, blank=True, null=True)
+    importer_markup = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    producer_price = models.DecimalField(
+        max_digits=18, decimal_places=4, null=True, blank=True
+    )
+    markup_rest_rub = models.DecimalField(
+        max_digits=18, decimal_places=4, null=True, blank=True
+    )
+    markup_rest_percent = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    is_analog = models.BooleanField(null=True, blank=True)
     source = models.CharField(max_length=64, default="armtek")
     fetched_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

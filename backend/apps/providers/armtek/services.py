@@ -20,6 +20,13 @@ class ArmtekSearchService:
         enable_stub: bool | None = None,
     ) -> None:
         self.credentials = credentials
+        # Armtek PROGRAM sometimes comes back as a human label (e.g. "Russia") and
+        # can filter results down to zero; we treat empty/meaningless values as absent.
+        self.program = (
+            credentials.program.strip() if credentials and credentials.program else None
+        )
+        if self.program and self.program.lower() == "russia":
+            self.program = None
         self.base_url = base_url or settings.ARMTEK_BASE_URL
         self.timeout = timeout or float(settings.ARMTEK_TIMEOUT)
         self.enable_stub = (
@@ -44,16 +51,19 @@ class ArmtekSearchService:
             password=self.credentials.password,
             timeout=self.timeout,
         ) as client:
-            return client.search(
+            items = client.search(
                 vkorg=self.credentials.vkorg,
                 kunnr_rg=self.credentials.kunnr_rg,
                 pin=pin,
                 brand=brand,
-                program=self.credentials.program,
+                query_type=1,  # Only direct matches (exclude analogs) per Armtek API
+                program=self.program,
                 kunnr_za=self.credentials.kunnr_za,
                 incoterms=self.credentials.incoterms,
                 vbeln=self.credentials.vbeln,
             )
+        main = self._pick_first_non_analog(items)
+        return [main] if main else []
 
     def _build_stub_item(self, *, pin: str, brand: str | None) -> ArmtekSearchItem:
         label = brand or "STUB"
@@ -64,7 +74,35 @@ class ArmtekSearchService:
             name=f"{pin} {label} (stub)",
             artid=artid,
             is_analog=False,
-            price=None,
-            currency=None,
+            price=0.0,
+            currency="RUB",
+            warehouse_partner="STUB",
+            warehouse_code="STB",
+            available_quantity=10,
+            return_days=7,
+            multiplicity=1,
+            minimum_order=1,
+            supply_probability=0.99,
+            delivery_date=None,
+            warranty_date=None,
+            import_flag=None,
+            special_flag=None,
+            max_retail_price=0.0,
+            markup=0.0,
+            note="stub data",
+            importer_markup=0.0,
+            producer_price=0.0,
+            markup_rest_rub=0.0,
+            markup_rest_percent=0.0,
             raw={"stub": True},
         )
+
+    @staticmethod
+    def _pick_first_non_analog(
+        items: list[ArmtekSearchItem],
+    ) -> ArmtekSearchItem | None:
+        """Return the first item that is not explicitly marked as analog."""
+        for item in items:
+            if item.is_analog is not True:
+                return item
+        return None

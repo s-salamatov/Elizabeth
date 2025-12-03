@@ -26,7 +26,11 @@ class ArmtekClient:
         self.login = login
         self.password = password
         self._client = httpx.Client(
-            base_url=self.base_url, timeout=timeout, transport=transport
+            base_url=self.base_url,
+            timeout=timeout,
+            transport=transport,
+            # Armtek expects HTTP Basic auth in addition to credentials in the body.
+            auth=(login, password) if login and password else None,
         )
 
     def close(self) -> None:
@@ -86,12 +90,32 @@ class ArmtekClient:
                     name=str(entry.get("NAME", "")),
                     artid=str(entry.get("ARTID", "")),
                     is_analog=(
-                        bool(entry.get("ANALOG"))
+                        bool(_coerce_int(entry.get("ANALOG")))
                         if entry.get("ANALOG") is not None
                         else None
                     ),
                     price=_coerce_float(entry.get("PRICE")),
-                    currency=str(entry.get("WAERS")) if entry.get("WAERS") else None,
+                    currency=_clean_str(entry.get("WAERS")),
+                    warehouse_partner=_clean_str(entry.get("PARNR")),
+                    warehouse_code=_clean_str(entry.get("KEYZAK")),
+                    available_quantity=_coerce_int(entry.get("RVALUE")),
+                    return_days=_coerce_int(entry.get("RETDAYS")),
+                    multiplicity=_coerce_int(entry.get("RDPRF")),
+                    minimum_order=_coerce_int(entry.get("MINBM")),
+                    supply_probability=_coerce_float(
+                        entry.get("VENSEL") or entry.get("VENSL")
+                    ),
+                    delivery_date=_clean_str(entry.get("DLVDT")),
+                    warranty_date=_clean_str(entry.get("WRNTDT")),
+                    import_flag=_clean_str(entry.get("TYPEB")),
+                    special_flag=_clean_str(entry.get("DSPEC")),
+                    max_retail_price=_coerce_float(entry.get("RCOST")),
+                    markup=_coerce_float(entry.get("MRKBY")),
+                    note=_clean_str(entry.get("PNOTE")),
+                    importer_markup=_coerce_float(entry.get("IMP_ADD")),
+                    producer_price=_coerce_float(entry.get("SELLP")),
+                    markup_rest_rub=_coerce_float(entry.get("REST_ADD")),
+                    markup_rest_percent=_coerce_float(entry.get("REST_ADD_P")),
                     raw=entry,
                 )
             )
@@ -150,3 +174,19 @@ def _coerce_float(value: Any) -> Optional[float]:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _coerce_int(value: Any) -> Optional[int]:
+    if value is None or value == "":
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _clean_str(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    value_str = str(value).strip()
+    return value_str or None

@@ -10,7 +10,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 SUPERUSER_EMAIL = os.environ.get("SUPERUSER_EMAIL", default="mail@example.com")
 SUPERUSER_PASSWORD = os.environ.get(
-    "SUPERUSER_PASSWORD", default="SuperSecretPassword123"
+    "SUPERUSER_PASSWORD", default="Super!SecretPassword$12.3"
 )
 SUPERUSER_PHONE = os.environ.get("SUPERUSER_PHONE", default="+790012345678")
 SUPERUSER_FIRST_NAME = os.environ.get("SUPERUSER_FIRST_NAME", default="Test")

@@ -34,6 +34,9 @@ jobs:
         python-version: ['3.12']
     env:
       DJANGO_SETTINGS_MODULE: backend.elizabeth.settings.dev
+      SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      PROVIDER_SECRET_KEY: ${{ secrets.PROVIDER_SECRET_KEY }}
+      ARMTEK_ENABLE_STUB: '1'
 
     steps:
       - name: Checkout

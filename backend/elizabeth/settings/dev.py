@@ -16,3 +16,23 @@ SUPERUSER_PHONE = os.environ.get("SUPERUSER_PHONE", default="+790012345678")
 SUPERUSER_FIRST_NAME = os.environ.get("SUPERUSER_FIRST_NAME", default="Test")
 SUPERUSER_LAST_NAME = os.environ.get("SUPERUSER_LAST_NAME", default="User")
 SUPERUSER_COUNTRY = os.environ.get("SUPERUSER_COUNTRY", default="RU")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "simple": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "httpx": {"handlers": ["console"], "level": "DEBUG"},
+        "backend.apps.providers.armtek": {"handlers": ["console"], "level": "DEBUG"},
+    },
+}

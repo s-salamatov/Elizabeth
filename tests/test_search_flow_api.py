@@ -10,7 +10,7 @@ def test_stub_search_and_details_flow(settings):
     # register + login
     creds = {
         "email": "flowuser@example.com",
-        "password": "StrongPass123",
+        "password": "Sup3rStrongP@ssw0rd!",
         "phone_number": "+79000000002",
         "country": "RU",
     }
@@ -72,7 +72,7 @@ def test_search_history_list(settings):
 
     creds = {
         "email": "historyuser@example.com",
-        "password": "StrongPass123",
+        "password": "Sup3rStrongP@ssw0rd!",
         "phone_number": "+79000000003",
         "country": "RU",
     }

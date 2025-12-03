@@ -6,7 +6,7 @@ from django.test import Client
 def test_register_and_login_returns_tokens():
     client = Client()
     payload = {
-        "password": "Password123",
+        "password": "Sup3rStrongP@ssw0rd!",
         "email": "u1@example.com",
         "phone_number": "+79000000001",
         "country": "RU",
@@ -22,7 +22,7 @@ def test_register_and_login_returns_tokens():
     # Login should work with same credentials
     resp_login = client.post(
         "/api/v1/auth/login",
-        {"email": "u1@example.com", "password": "Password123"},
+        {"email": "u1@example.com", "password": "Sup3rStrongP@ssw0rd!"},
         content_type="application/json",
     )
     assert resp_login.status_code == 200

@@ -67,9 +67,10 @@ def fetch_armtek_profile(
             vkorg = str(
                 vkorg_entry.get("VKORG") or vkorg_entry.get("vkorg") or ""
             ).strip()
-            program = (
+            program_raw = (
                 vkorg_entry.get("PROGRAM_NAME") or vkorg_entry.get("PROGRAM") or None
-            ) and str(vkorg_entry.get("PROGRAM_NAME") or vkorg_entry.get("PROGRAM"))
+            )
+            program = str(program_raw).strip() if program_raw else None
             if not vkorg:
                 raise ArmtekError("Armtek VKORG is missing in response")
 

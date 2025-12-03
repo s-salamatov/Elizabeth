@@ -40,24 +40,34 @@ def main() -> None:
     run_cmd(["npm", "run", "build"], cwd=FRONTEND_DIR, env=env)
     run_cmd([python_bin, "manage.py", "makemigrations"], env=env)
     run_cmd([python_bin, "manage.py", "migrate"], env=env)
-    server = subprocess.Popen(
-        [python_bin, "manage.py", "runserver", "127.0.0.1:8000"],
-        cwd=REPO_ROOT,
-        env=env,
-    )
-    try:
-        server.wait()
-    except KeyboardInterrupt:
-        print("\nStopping dev server (Ctrl+C)...")
-        server.send_signal(signal.SIGINT)
+    log_path = Path("/tmp/elizabeth-django-runserver.log")
+    print(f"→ Writing runserver output to {log_path}")
+    interrupted = False
+    with log_path.open("a") as log_file:
+        server = subprocess.Popen(
+            [python_bin, "manage.py", "runserver", "127.0.0.1:8000"],
+            cwd=REPO_ROOT,
+            env=env,
+            stdout=log_file,
+            stderr=log_file,
+        )
         try:
-            server.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            server.terminate()
             server.wait()
-        return
-    if server.returncode != 0:
-        raise subprocess.CalledProcessError(server.returncode, server.args)
+        except KeyboardInterrupt:
+            print("\nStopping dev server (Ctrl+C)...")
+            interrupted = True
+            server.send_signal(signal.SIGINT)
+            try:
+                server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server.terminate()
+                server.wait()
+        finally:
+            if server.poll() is None:
+                server.terminate()
+                server.wait()
+        if not interrupted and server.returncode != 0:
+            raise subprocess.CalledProcessError(server.returncode, server.args)
 
 
 if __name__ == "__main__":

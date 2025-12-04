@@ -1,8 +1,10 @@
 [tool.black]
 line-length = 88
 target-version = ["py312"]
+extend-exclude = "elizabeth_legacy"
 
 [tool.isort]
 profile = "black"
 line_length = 88
-src_paths = ["elizabeth", "tests"]
+src_paths = ["backend", "tests"]
+skip = ["elizabeth_legacy", ".venv"]

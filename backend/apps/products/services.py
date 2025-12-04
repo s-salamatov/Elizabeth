@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+from datetime import timedelta
+from typing import Any, Iterable, Protocol
+from uuid import uuid4
+
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
+from backend.apps.products.models import (
+    DetailsRequestStatus,
+    Product,
+    ProductDetails,
+    ProductDetailsRequest,
+)
+
+
+class SearchItemLike(Protocol):
+    artid: str
+    brand: str
+    pin: str
+    name: str
+    oem: str | None
+    price: float | None
+    currency: str | None
+    available_quantity: int | None
+    warehouse_partner: str | None
+    warehouse_code: str | None
+    return_days: int | None
+    multiplicity: int | None
+    minimum_order: int | None
+    supply_probability: float | None
+    delivery_date: str | None
+    warranty_date: str | None
+    import_flag: str | None
+    special_flag: str | None
+    max_retail_price: float | None
+    markup: float | None
+    note: str | None
+    importer_markup: float | None
+    producer_price: float | None
+    markup_rest_rub: float | None
+    markup_rest_percent: float | None
+    is_analog: bool | None
+
+
+def _cache_ttl() -> timedelta:
+    minutes = getattr(settings, "SEARCH_CACHE_TTL_MINUTES", 60)
+    return timedelta(minutes=minutes)
+
+
+def is_product_fresh(product: Product) -> bool:
+    if product.fetched_at is None:
+        return False
+    return timezone.now() - product.fetched_at <= _cache_ttl()
+
+
+def upsert_product_from_search(
+    item: SearchItemLike,
+    *,
+    source: str = "armtek",
+    user: Any,
+    search_request: Any,
+) -> Product:
+    defaults = {
+        "user": user,
+        "search_request": search_request,
+        "brand": item.brand,
+        "pin": item.pin,
+        "oem": getattr(item, "oem", "") or "",
+        "name": item.name,
+        "price": getattr(item, "price", None),
+        "currency": getattr(item, "currency", None) or None,
+        "available_quantity": getattr(item, "available_quantity", None),
+        "warehouse_partner": getattr(item, "warehouse_partner", None) or None,
+        "warehouse_code": getattr(item, "warehouse_code", None) or None,
+        "return_days": getattr(item, "return_days", None),
+        "multiplicity": getattr(item, "multiplicity", None),
+        "minimum_order": getattr(item, "minimum_order", None),
+        "supply_probability": getattr(item, "supply_probability", None),
+        "delivery_date": getattr(item, "delivery_date", None) or None,
+        "warranty_date": getattr(item, "warranty_date", None) or None,
+        "import_flag": getattr(item, "import_flag", None) or None,
+        "special_flag": getattr(item, "special_flag", None) or None,
+        "max_retail_price": getattr(item, "max_retail_price", None),
+        "markup": getattr(item, "markup", None),
+        "note": getattr(item, "note", None) or None,
+        "importer_markup": getattr(item, "importer_markup", None),
+        "producer_price": getattr(item, "producer_price", None),
+        "markup_rest_rub": getattr(item, "markup_rest_rub", None),
+        "markup_rest_percent": getattr(item, "markup_rest_percent", None),
+        "is_analog": getattr(item, "is_analog", None),
+        "source": source,
+        "fetched_at": timezone.now(),
+    }
+    product, created = Product.objects.get_or_create(
+        artid=item.artid,
+        search_request=search_request,
+        defaults=defaults,
+    )
+    if not created:
+        changed = False
+        for field, value in defaults.items():
+            if value is None:
+                continue
+            if value == "" and getattr(product, field):
+                continue
+            if getattr(product, field) != value:
+                setattr(product, field, value)
+                changed = True
+        if not is_product_fresh(product):
+            product.fetched_at = timezone.now()
+            changed = True
+        if changed:
+            product.save()
+    ensure_details_request(product)
+    return product
+
+
+def upsert_products_from_search(
+    items: Iterable[SearchItemLike],
+    *,
+    source: str = "armtek",
+    user: Any,
+    search_request: Any,
+) -> list[Product]:
+    products: list[Product] = []
+    for item in items:
+        products.append(
+            upsert_product_from_search(
+                item, source=source, user=user, search_request=search_request
+            )
+        )
+    return products
+
+
+def update_product_details(product: Product, *, data: dict[str, Any]) -> ProductDetails:
+    details, _ = ProductDetails.objects.get_or_create(product=product)
+    for field in ["image_url", "weight", "length", "width", "height", "analog_code"]:
+        if field in data:
+            setattr(details, field, data[field])
+    details.fetched_at = timezone.now()
+    details.save()
+    _set_details_request_status(product, DetailsRequestStatus.READY, error=None)
+    return details
+
+
+def ensure_details_request(product: Product) -> ProductDetailsRequest:
+    request, created = ProductDetailsRequest.objects.get_or_create(
+        product=product,
+        defaults={
+            "request_id": uuid4(),
+            "status": DetailsRequestStatus.PENDING,
+            "last_error": "",
+        },
+    )
+    if created:
+        return request
+    # When reusing an existing request for a new run, drop stale error text
+    if request.last_error:
+        request.last_error = ""
+        request.save(update_fields=["last_error", "updated_at"])
+    return request
+
+
+@transaction.atomic
+def mark_requests_pending(products: list[Product]) -> list[ProductDetailsRequest]:
+    requests: list[ProductDetailsRequest] = []
+    for product in products:
+        req = ensure_details_request(product)
+        if req.status != DetailsRequestStatus.PENDING or req.last_error:
+            req.status = DetailsRequestStatus.PENDING
+            req.last_error = ""
+            req.save(update_fields=["status", "last_error", "updated_at"])
+        requests.append(req)
+    return requests
+
+
+def _set_details_request_status(
+    product: Product, status: DetailsRequestStatus, *, error: str | None = None
+) -> None:
+    try:
+        req = product.details_request
+    except ProductDetailsRequest.DoesNotExist:
+        req = ensure_details_request(product)
+    changed = False
+    if req.status != status:
+        req.status = status
+        changed = True
+    if error is not None and error != req.last_error:
+        req.last_error = error
+        changed = True
+    if changed:
+        req.save(update_fields=["status", "last_error", "updated_at"])

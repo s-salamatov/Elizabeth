@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-black . --check
-isort . --check-only
-flake8 .
-mypy elizabeth
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+echo "[lint.sh] Delegating to check_backend.sh and check_frontend.sh"
+"${ROOT_DIR}/scripts/check_backend.sh"
+"${ROOT_DIR}/scripts/check_frontend.sh"

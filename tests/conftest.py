@@ -1,6 +1,10 @@
-import sys
-from pathlib import Path
+import os
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+import django
+import pytest
+
+
+@pytest.fixture(scope="session", autouse=True)
+def django_setup():
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.elizabeth.settings.dev")
+    django.setup()

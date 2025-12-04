@@ -1,30 +1,32 @@
 <template>
   <MainLayout>
-    <div class="row g-3">
-      <div class="col-12">
-        <SearchForm
-          v-model="query"
-          :loading="loading"
-          :error="error"
-          @submit="onSearch"
-        />
-      </div>
-      <div class="col-12">
-        <SearchResultsTable
-          :products="products"
-          :requesting="requestingDetails"
-          :refreshing="refreshing"
-          :helper-message="helperMessage"
-          @request-details="requestDetails"
-          @refresh="refresh"
-        />
-      </div>
-    </div>
+    <SearchForm
+      v-model="query"
+      :loading="loading"
+      :error="error"
+      :collapsed="isCollapsed"
+      :can-collapse="hasSearched"
+      @toggle-collapse="toggleCollapse"
+      @submit="onSearch"
+    />
+
+    <transition name="fade-up">
+      <SearchResultsTable
+        v-if="hasSearched"
+        ref="resultsCard"
+        class="mt-3"
+        :products="products"
+        :requesting="requestingDetails"
+        :refreshing="refreshing"
+        @request-details="requestDetails"
+        @refresh="refresh"
+      />
+    </transition>
   </MainLayout>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { ProductApi, SearchApi } from '../api';
 import MainLayout from '../components/layout/MainLayout.vue';
@@ -38,7 +40,9 @@ const products = ref([]);
 const searchRequestId = ref(null);
 const requestingDetails = ref(false);
 const refreshing = ref(false);
-const helperMessage = ref('');
+const hasSearched = ref(false);
+const isCollapsed = ref(false);
+const resultsCard = ref(null);
 let pollTimer = null;
 const route = useRoute();
 
@@ -53,9 +57,10 @@ const onSearch = async ({ value }) => {
     const { data } = await SearchApi.bulk({ bulk_text: value });
     searchRequestId.value = data.request.id;
     products.value = data.products || [];
-    helperMessage.value =
-      'Кнопка «Получить характеристики товаров» запустит процесс открытия страниц Armtek и обновит данные по мере готовности.';
     startPolling();
+    hasSearched.value = true;
+    isCollapsed.value = true;
+    await focusResults();
   } catch (err) {
     error.value = err.response?.data?.detail || 'Не удалось выполнить поиск. Попробуйте ещё раз.';
   } finally {
@@ -70,8 +75,8 @@ const refresh = async () => {
     const { data } = await SearchApi.detail(searchRequestId.value);
     products.value = data.products || [];
     query.value = data.request?.query_string || query.value;
-    helperMessage.value =
-      'Поиск обновлён. Если характеристики ещё не готовы, обновите статус позже или нажмите «Получить характеристики товаров».';
+    hasSearched.value = true;
+    isCollapsed.value = true;
   } catch (err) {
     error.value = err.response?.data?.detail || 'Не удалось обновить результаты поиска.';
   } finally {
@@ -93,8 +98,6 @@ const requestDetails = async () => {
         ? { ...p, request_id: req.request_id, details_status: req.status ?? 'pending' }
         : { ...p, details_status: 'pending' };
     });
-    helperMessage.value =
-      'Мы поставили товары в очередь. Расширение откроет вкладки Armtek, считает характеристики и вернёт их в таблицу.';
     await openArmtekQueueSequential();
     startPolling();
   } catch (err) {
@@ -127,7 +130,7 @@ const pollOnce = async () => {
     const map = new Map((data || []).map((item) => [item.id, item]));
     products.value = products.value.map((p) => (map.has(p.id) ? map.get(p.id) : p));
   } catch {
-    helperMessage.value = 'Не удалось обновить статусы. Попробуйте обновить страницу или повторить позже.';
+    // silent polling failure
   }
 };
 
@@ -159,14 +162,12 @@ const openArmtekQueueSequential = async () => {
   const processed = new Set();
   try {
     while (true) {
-      const { data } = await ProductApi.jobs(50);
+      const { data } = await ProductApi.jobs(50, searchRequestId.value);
       const queue = Array.isArray(data)
         ? data.filter((job) => job && !processed.has(job.request_id))
         : [];
 
       if (!queue.length) {
-        helperMessage.value =
-          'Очередь характеристик пуста — если товары ещё без характеристик, попробуйте нажать «Получить характеристики товаров» снова.';
         break;
       }
 
@@ -179,19 +180,13 @@ const openArmtekQueueSequential = async () => {
           window.open(job.open_url, '_blank', 'noopener,noreferrer');
         }
         const result = await waitForDetails(job.request_id);
-        if (result === 'timeout') {
-          helperMessage.value = 'Таймаут ожидания расширения. Остановили очередь.';
-          return;
-        }
-        if (result === 'error') {
-          helperMessage.value = 'Ошибка при опросе статуса. Остановили очередь.';
+        if (result === 'timeout' || result === 'error') {
           return;
         }
       }
     }
-  } catch (err) {
-    helperMessage.value =
-      err.response?.data?.detail || 'Не удалось открыть страницы Armtek для чтения характеристик.';
+  } catch {
+    // ignore errors, user can retry
   } finally {
     openingQueue = false;
   }
@@ -201,7 +196,19 @@ const loadRequestFromRoute = async () => {
   const id = route.query.request;
   if (!id) return;
   searchRequestId.value = id;
+  hasSearched.value = true;
   await refresh();
+};
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value;
+};
+
+const focusResults = async () => {
+  await nextTick();
+  if (resultsCard.value?.$el) {
+    resultsCard.value.$el.focus({ preventScroll: false });
+  }
 };
 
 onMounted(() => {

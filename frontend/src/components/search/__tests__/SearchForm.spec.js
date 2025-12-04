@@ -28,7 +28,7 @@ describe('SearchForm', () => {
 
     expect(wrapper.emitted()['update:modelValue'][0]).toEqual(['KYB 332101']);
 
-    await wrapper.get('button.btn-outline-gradient').trigger('click');
+    await wrapper.get('button.btn-gradient').trigger('click');
 
     const submitEvents = wrapper.emitted('submit');
     expect(submitEvents).toBeTruthy();
@@ -42,7 +42,7 @@ describe('SearchForm', () => {
       },
     });
 
-    await wrapper.get('button.btn-link').trigger('click');
+    await wrapper.get('button.btn-ghost').trigger('click');
 
     expect(wrapper.emitted()['update:modelValue'].at(-1)).toEqual(['']);
     expect(wrapper.get('textarea').element.value).toBe('');

@@ -232,9 +232,23 @@ class ProductDetailsJobsView(APIView):
             limit = max(1, min(int(limit_raw), 200))
         except ValueError:
             limit = 20
+        search_request_id_raw = request.query_params.get("search_request_id")
+        search_request_id = None
+        if search_request_id_raw:
+            try:
+                search_request_id = int(search_request_id_raw)
+            except (TypeError, ValueError):
+                search_request_id = None
 
         pending = (
             Product.objects.filter(details_request__status="pending", user=user)
+            .filter(
+                **(
+                    {"search_request_id": search_request_id}
+                    if search_request_id
+                    else {}
+                )
+            )
             .select_related("details_request")
             .order_by("details_request__created_at", "id")[:limit]
         )

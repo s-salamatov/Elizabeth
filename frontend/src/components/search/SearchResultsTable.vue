@@ -1,27 +1,32 @@
 <template>
-  <div class="card table-card">
+  <div class="card table-card results-card" tabindex="-1">
     <div class="card-body">
       <div class="section-card-title mb-3">
         <div>
           <h5 class="card-title mb-1">Результаты поиска</h5>
           <p class="text-muted mb-0">
             <span v-if="products.length">Найдено {{ products.length }} товаров. Получите характеристики, чтобы увидеть фото, размеры и аналоги.</span>
-            <span v-else>Результатов пока нет. Введите артикулы и нажмите «Найти».</span>
+            <span v-else>Выполните поиск, чтобы увидеть результаты.</span>
           </p>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-          <button class="btn btn-outline-gradient" :disabled="products.length === 0 || requesting" @click="requestDetails">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <button
+            v-if="products.length > 0"
+            class="btn btn-gradient"
+            :disabled="requesting"
+            @click="openConfirm"
+          >
             <span v-if="requesting" class="spinner-border spinner-border-sm me-2" role="status"></span>
             <i v-else class="bi bi-collection-play me-1"></i>
-            {{ requesting ? 'Идёт обработка…' : 'Получить характеристики товаров' }}
+            {{ requesting ? 'Идёт обработка…' : 'Получить дополнительные характеристики' }}
           </button>
-          <button class="btn btn-ghost btn-outline-light" :disabled="refreshing" @click="$emit('refresh')">
+          <button class="btn btn-ghost" :disabled="refreshing" @click="$emit('refresh')">
             <i class="bi bi-arrow-repeat me-1"></i> Обновить
           </button>
         </div>
       </div>
 
-      <div v-if="products.length === 0" class="empty-state">
+      <div v-if="products.length === 0" class="empty-state empty-state-compact">
         Результатов пока нет. Введите артикулы и нажмите «Найти».
       </div>
 
@@ -43,16 +48,17 @@
             <tbody>
               <tr v-for="product in products" :key="product.id">
                 <td v-for="col in columns" :key="col.key" class="align-middle">
-                  <template v-if="col.key === 'artid'">
+                  <template v-if="col.key === 'details_status'">
+                    <span
+                      :class="statusDot(product.details_status)"
+                      :title="statusLabel(product.details_status)"
+                      :aria-label="statusLabel(product.details_status)"
+                    ></span>
+                  </template>
+                  <template v-else-if="col.key === 'artid'">
                     <a :href="armtekUrl(product.artid)" target="_blank" rel="noopener" class="fw-semibold text-decoration-none">
                       {{ product.artid }}
                     </a>
-                  </template>
-                  <template v-else-if="col.key === 'details_status'">
-                    <span :class="statusClass(product.details_status)" :title="statusTooltip(product)">
-                      <i :class="statusIcon(product.details_status)" class="me-1"></i>
-                      {{ statusLabel(product.details_status) }}
-                    </span>
                   </template>
                   <template v-else-if="col.key === 'image_url'">
                     <div v-if="product.details?.image_url" class="d-inline-flex align-items-center gap-2">
@@ -74,36 +80,43 @@
             </tbody>
           </table>
         </div>
-        <div class="table-help mt-2">
-          <i class="bi bi-arrows-expand"></i>
-          <span>Таблица тянется на всю ширину экрана и скроллится по горизонтали.</span>
-        </div>
       </template>
 
-      <AlertMessage
-        v-if="helperMessage"
-        :message="helperMessage"
-        variant="info"
-        class="mt-3"
-      />
+      <div v-if="showConfirm" class="modal-backdrop show" aria-hidden="true"></div>
+      <div v-if="showConfirm" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Открыть вкладки Armtek?</h5>
+              <button type="button" class="btn-close" aria-label="Закрыть" @click="cancelConfirm"></button>
+            </div>
+            <div class="modal-body">
+              Браузер по очереди откроет страницы с товарами, а расширение считает характеристики и вернёт их в приложение. Продолжить?
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" @click="cancelConfirm">Отмена</button>
+              <button type="button" class="btn btn-gradient" @click="confirmRequest">Ок</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
-import AlertMessage from '../common/AlertMessage.vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
   products: { type: Array, default: () => [] },
   requesting: { type: Boolean, default: false },
   refreshing: { type: Boolean, default: false },
-  helperMessage: { type: String, default: '' },
 });
 
 const emit = defineEmits(['request-details', 'refresh']);
 
 const columns = [
+  { key: 'details_status', label: '' },
   { key: 'artid', label: 'Артикул' },
   { key: 'brand', label: 'Бренд' },
   { key: 'name', label: 'Наименование' },
@@ -126,7 +139,6 @@ const columns = [
   { key: 'markup_rest_percent', label: 'Остаток надб., %' },
   { key: 'is_analog', label: 'Аналог' },
   { key: 'note', label: 'Примечание' },
-  { key: 'details_status', label: 'Статус' },
   { key: 'image_url', label: 'Фото' },
   { key: 'weight', label: 'Вес, кг' },
   { key: 'length', label: 'Длина, см' },
@@ -147,33 +159,22 @@ const summary = computed(() => {
   return acc;
 });
 
-const requestDetails = () => emit('request-details');
+const showConfirm = ref(false);
+
+const openConfirm = () => {
+  showConfirm.value = true;
+};
+
+const cancelConfirm = () => {
+  showConfirm.value = false;
+};
+
+const confirmRequest = () => {
+  showConfirm.value = false;
+  emit('request-details');
+};
 
 const armtekUrl = (artid) => `https://etp.armtek.ru/artinfo/index/${encodeURIComponent(artid || '')}`;
-
-const statusClass = (status) => {
-  switch (status) {
-    case 'ready':
-      return 'status-pill ready';
-    case 'failed':
-      return 'status-pill failed';
-    case 'pending':
-      return 'status-pill pending';
-    default:
-      return 'status-pill idle';
-  }
-};
-
-const statusIcon = (status) => {
-  switch (status) {
-    case 'ready':
-      return 'bi bi-check-circle-fill';
-    case 'failed':
-      return 'bi bi-exclamation-octagon-fill';
-    default:
-      return 'bi bi-arrow-repeat';
-  }
-};
 
 const statusLabel = (status) => {
   switch (status) {
@@ -188,10 +189,17 @@ const statusLabel = (status) => {
   }
 };
 
-const statusTooltip = (product) => {
-  if (product.details_status === 'failed' && product.details_error) return product.details_error;
-  if (product.details_status === 'ready') return 'Характеристики получены через расширение';
-  return 'В очереди или в процессе получения';
+const statusDot = (status) => {
+  switch (status) {
+    case 'ready':
+      return 'status-icon ready bi bi-check-circle-fill';
+    case 'failed':
+      return 'status-icon failed bi bi-exclamation-octagon-fill';
+    case 'pending':
+      return 'status-icon pending bi bi-arrow-repeat';
+    default:
+      return 'status-icon idle bi bi-dot';
+  }
 };
 
 const formatMoney = (value, currency = '') => {
@@ -271,39 +279,15 @@ const copyLink = async (url) => {
   min-width: 1400px;
 }
 
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 12px;
-  color: #0f172a;
-}
-
-.status-pill.ready {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-pill.pending {
-  background: #e0f2fe;
-  color: #0ea5e9;
-}
-
-.status-pill.failed {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.status-pill.idle {
-  background: #e5e7eb;
-  color: #374151;
+.wide-table th:first-child,
+.wide-table td:first-child {
+  width: 44px;
+  text-align: center;
 }
 
 .table-card {
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
 }
 
 .table-responsive::-webkit-scrollbar {
@@ -315,11 +299,5 @@ const copyLink = async (url) => {
   border-radius: 4px;
 }
 
-.table-help {
-  color: #6b7280;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.status-dot { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
 </style>

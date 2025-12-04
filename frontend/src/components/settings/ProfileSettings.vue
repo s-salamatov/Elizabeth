@@ -97,7 +97,7 @@
         <div class="col-md-6">
           <p class="form-label mb-1">Тема оформления</p>
           <div class="d-flex gap-2 flex-wrap">
-            <span class="theme-chip" :class="{ 'bg-dark text-white': theme.resolvedTheme.value === 'dark' }">
+            <span class="theme-chip" :class="{ 'is-dark': theme.resolvedTheme.value === 'dark' }">
               <i class="bi" :class="themeIcon"></i>
               {{ themeLabel }}
             </span>

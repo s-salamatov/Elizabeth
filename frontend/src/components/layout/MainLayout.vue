@@ -3,9 +3,14 @@
     <Topbar />
     <nav class="section-nav">
       <div class="container page-container d-flex align-items-center">
-        <RouterLink class="nav-link" :class="{ active: route.name === 'search' }" to="/search">Поиск товаров</RouterLink>
-        <RouterLink class="nav-link" :class="{ active: route.name === 'requests' }" to="/requests">Мои запросы</RouterLink>
-        <RouterLink class="nav-link" :class="{ active: route.name === 'settings' }" to="/settings">Настройки</RouterLink>
+        <RouterLink class="nav-link" :class="{ active: route.name === 'search' }" to="/search">
+          <i class="bi bi-search"></i>
+          Поиск товаров
+        </RouterLink>
+        <RouterLink class="nav-link" :class="{ active: route.name === 'requests' }" to="/requests">
+          <i class="bi bi-clock-history"></i>
+          Мои запросы
+        </RouterLink>
       </div>
     </nav>
     <main class="page-container main-shell">

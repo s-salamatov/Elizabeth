@@ -29,7 +29,8 @@ describe('SearchResultsTable', () => {
     const rows = wrapper.findAll('tbody tr');
     expect(rows).toHaveLength(2);
     expect(rows[0].text()).toContain('123');
-    expect(rows[1].text()).toContain('ожидание');
+    const statusSpan = rows[1].find('td:first-child span');
+    expect(statusSpan.attributes('aria-label')).toBe('ожидание');
   });
 
   it('emits request-details and refresh', async () => {
@@ -37,8 +38,9 @@ describe('SearchResultsTable', () => {
       props: { products: sampleProducts }
     });
 
-    await wrapper.get('button.btn-outline-gradient').trigger('click');
-    await wrapper.get('button.btn-outline-light').trigger('click');
+    await wrapper.get('button.btn-gradient').trigger('click');
+    await wrapper.get('.modal .btn-gradient').trigger('click');
+    await wrapper.get('button.btn-ghost').trigger('click');
 
     expect(wrapper.emitted()['request-details']).toBeTruthy();
     expect(wrapper.emitted().refresh).toBeTruthy();

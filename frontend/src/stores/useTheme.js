@@ -2,11 +2,22 @@ import { ref, watch, computed } from 'vue';
 
 const STORAGE_KEY = 'elizabeth_theme';
 const theme = ref(localStorage.getItem(STORAGE_KEY) || 'system');
-const systemPrefersDark = () => window.matchMedia('(prefers-color-scheme: dark)').matches;
+const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+const systemPreference = ref(mediaQuery.matches);
+
+const handleSystemChange = (event) => {
+  systemPreference.value = event.matches;
+};
+
+if (mediaQuery.addEventListener) {
+  mediaQuery.addEventListener('change', handleSystemChange);
+} else if (mediaQuery.addListener) {
+  mediaQuery.addListener(handleSystemChange);
+}
 
 const resolvedTheme = computed(() => {
   if (theme.value === 'system') {
-    return systemPrefersDark() ? 'dark' : 'light';
+    return systemPreference.value ? 'dark' : 'light';
   }
   return theme.value;
 });

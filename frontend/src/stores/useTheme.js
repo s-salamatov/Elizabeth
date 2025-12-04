@@ -25,6 +25,11 @@ const resolvedTheme = computed(() => {
 function applyTheme(value) {
   document.body.classList.remove('theme-light', 'theme-dark');
   document.body.classList.add(`theme-${value}`);
+  document.documentElement.classList.add('theme-transition');
+  window.clearTimeout(applyTheme._timer);
+  applyTheme._timer = window.setTimeout(() => {
+    document.documentElement.classList.remove('theme-transition');
+  }, 320);
 }
 
 watch(

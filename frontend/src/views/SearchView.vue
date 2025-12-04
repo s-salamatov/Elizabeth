@@ -1,14 +1,16 @@
 <template>
   <MainLayout>
-    <SearchForm
-      v-model="query"
-      :loading="loading"
-      :error="error"
-      :collapsed="isCollapsed"
-      :can-collapse="hasSearched"
-      @toggle-collapse="toggleCollapse"
-      @submit="onSearch"
-    />
+    <div class="search-shell" :class="{ 'with-results': hasSearched }">
+      <SearchForm
+        v-model="query"
+        :loading="loading"
+        :error="error"
+        :collapsed="isCollapsed"
+        :can-collapse="hasSearched"
+        @toggle-collapse="toggleCollapse"
+        @submit="onSearch"
+      />
+    </div>
 
     <transition name="fade-up">
       <SearchResultsTable

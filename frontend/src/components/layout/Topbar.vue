@@ -1,7 +1,7 @@
 <template>
   <header class="topbar">
-    <div class="container page-container d-flex align-items-center justify-content-between py-3 gap-3">
-      <div class="d-flex align-items-center gap-3">
+    <div class="container page-container d-flex align-items-center justify-content-between py-3 gap-3 topbar-grid">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
         <div class="brand d-flex align-items-center gap-2">
           <div class="brand-mark">
             <span>El</span>
@@ -14,6 +14,14 @@
           <span class="status-dot blink"></span>
           <span class="fw-semibold">Системы доступны</span>
         </div>
+        <nav class="topbar-nav d-none d-md-flex">
+          <RouterLink class="nav-link" :class="{ active: route.name === 'search' }" to="/search">
+            <i class="bi bi-search"></i> Поиск
+          </RouterLink>
+          <RouterLink class="nav-link" :class="{ active: route.name === 'requests' }" to="/requests">
+            <i class="bi bi-clock-history"></i> Запросы
+          </RouterLink>
+        </nav>
       </div>
       <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
         <div class="dropdown" v-if="auth.state.user">
@@ -69,10 +77,12 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuth } from '../../stores/useAuth';
 import { useTheme } from '../../stores/useTheme';
+import { useRoute } from 'vue-router';
 
 const auth = useAuth();
 const router = useRouter();
 const theme = useTheme();
+const route = useRoute();
 
 const displayName = computed(() => {
   const first = auth.state.user.first_name || '';
@@ -117,5 +127,27 @@ const logout = () => {
   0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.45); }
   70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
   100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.topbar-grid { gap: 1rem; }
+.topbar-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+.topbar-nav .nav-link {
+  color: var(--color-muted);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  transition: color var(--transition-base), background-color var(--transition-base);
+}
+.topbar-nav .nav-link.active,
+.topbar-nav .nav-link.router-link-active {
+  color: var(--color-text);
+  background: rgba(111, 143, 255, 0.12);
 }
 </style>

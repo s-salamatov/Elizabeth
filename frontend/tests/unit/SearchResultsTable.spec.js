@@ -39,7 +39,7 @@ describe('SearchResultsTable', () => {
     });
 
     await wrapper.get('button.btn-gradient').trigger('click');
-    await wrapper.get('.modal .btn-gradient').trigger('click');
+    await wrapper.get('.modal-layer .btn-gradient').trigger('click');
     await wrapper.get('button.btn-ghost').trigger('click');
 
     expect(wrapper.emitted()['request-details']).toBeTruthy();

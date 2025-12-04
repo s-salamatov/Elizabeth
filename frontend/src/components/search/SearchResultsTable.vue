@@ -82,10 +82,9 @@
         </div>
       </template>
 
-      <div v-if="showConfirm" class="modal-backdrop show" aria-hidden="true"></div>
-      <div v-if="showConfirm" class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-          <div class="modal-content">
+      <transition name="fade-scale">
+        <div v-if="showConfirm" class="modal-layer" role="dialog" aria-modal="true">
+          <div class="modal-box">
             <div class="modal-header">
               <h5 class="modal-title">Открыть вкладки Armtek?</h5>
               <button type="button" class="btn-close" aria-label="Закрыть" @click="cancelConfirm"></button>
@@ -99,7 +98,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -163,14 +162,17 @@ const showConfirm = ref(false);
 
 const openConfirm = () => {
   showConfirm.value = true;
+  document.body.style.overflow = 'hidden';
 };
 
 const cancelConfirm = () => {
   showConfirm.value = false;
+  document.body.style.overflow = '';
 };
 
 const confirmRequest = () => {
   showConfirm.value = false;
+  document.body.style.overflow = '';
   emit('request-details');
 };
 

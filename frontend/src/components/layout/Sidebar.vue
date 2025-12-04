@@ -6,7 +6,6 @@
       </div>
       <div>
         <h5 class="mb-0">Elizabeth</h5>
-        <small class="text-muted">SPA-панель</small>
       </div>
     </div>
     <div class="list-group list-group-flush">

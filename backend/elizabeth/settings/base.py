@@ -7,6 +7,10 @@ from pathlib import Path
 
 import environ
 
+# Runtime compatibility (Python 3.14) – must run before Django imports that render
+# templates/admin.
+from backend.elizabeth import patches  # noqa: F401
+
 from .providers.armtek import *  # noqa: F403, F401
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent

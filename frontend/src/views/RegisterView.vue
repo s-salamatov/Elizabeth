@@ -4,17 +4,13 @@
       <div class="card shadow-lg">
         <div class="card-body p-4 p-md-5">
           <div class="text-center mb-4">
-            <div class="pill-group mb-2">Регистрация · шаг {{ step }}</div>
+            <div class="pill-group mb-2">Elizabeth</div>
             <h1 class="fw-bold mb-1">Создать аккаунт</h1>
-            <p class="text-muted mb-0">
-              Сначала укажите email и пароль, затем заполните контактные данные.
-            </p>
           </div>
 
           <form v-if="step === 1" class="row g-3" @submit.prevent="handleStepOne">
             <div class="col-12">
               <label class="form-label w-100" for="register-email">
-                Email
                 <input
                   id="register-email"
                   name="email"
@@ -23,13 +19,12 @@
                   class="form-control"
                   autocomplete="email"
                   required
-                  placeholder="you@example.com"
+                  placeholder="Email"
                 />
               </label>
             </div>
             <div class="col-md-6">
               <label class="form-label w-100" for="register-password">
-                Пароль
                 <input
                   id="register-password"
                   name="password"
@@ -38,16 +33,19 @@
                   class="form-control"
                   autocomplete="new-password"
                   required
-                  placeholder="••••••••"
+                  placeholder="Пароль"
                 />
               </label>
-              <div class="form-text" :class="{ 'text-danger': passwordWeak, 'text-success': !passwordWeak }">
+              <div
+                v-if="showPasswordHint"
+                class="form-text"
+                :class="{ 'text-danger': passwordWeak, 'text-success': !passwordWeak }"
+              >
                 {{ passwordHint }}
               </div>
             </div>
             <div class="col-md-6">
               <label class="form-label w-100" for="register-password2">
-                Повтор пароля
                 <input
                   id="register-password2"
                   name="password-confirmation"
@@ -56,7 +54,7 @@
                   class="form-control"
                   autocomplete="new-password"
                   required
-                  placeholder="••••••••"
+                  placeholder="Повторите пароль"
                 />
               </label>
             </div>
@@ -66,7 +64,9 @@
                 <i v-else class="bi bi-arrow-right-circle me-1"></i>
                 Продолжить
               </button>
-              <RouterLink to="/login" class="text-decoration-none">У меня уже есть аккаунт</RouterLink>
+            </div>
+            <div class="col-12">
+              <RouterLink to="/login" class="text-decoration-none small text-muted">У меня уже есть аккаунт</RouterLink>
             </div>
             <AlertMessage v-if="auth.state.error" :message="auth.state.error" variant="danger" class="mt-2" />
           </form>
@@ -74,7 +74,6 @@
           <form v-else class="row g-3" @submit.prevent="handleStepTwo">
             <div class="col-md-6">
               <label class="form-label w-100" for="register-phone">
-                Телефон
                 <input
                   id="register-phone"
                   name="phone"
@@ -82,13 +81,12 @@
                   class="form-control"
                   autocomplete="tel"
                   required
-                  placeholder="+79001234567"
+                  placeholder="Номер телефона: +79..."
                 />
               </label>
             </div>
             <div class="col-md-6">
               <label class="form-label w-100" for="register-country">
-                Страна
                 <select
                   id="register-country"
                   name="country"
@@ -104,27 +102,25 @@
             </div>
             <div class="col-md-6">
               <label class="form-label w-100" for="register-first-name">
-                Имя
                 <input
                   id="register-first-name"
                   name="first_name"
                   v-model="firstName"
                   class="form-control"
                   autocomplete="given-name"
-                  placeholder="Иван"
+                  placeholder="Имя"
                 />
               </label>
             </div>
             <div class="col-md-6">
               <label class="form-label w-100" for="register-last-name">
-                Фамилия
                 <input
                   id="register-last-name"
                   name="last_name"
                   v-model="lastName"
                   class="form-control"
                   autocomplete="family-name"
-                  placeholder="Иванов"
+                  placeholder="Фамилия"
                 />
               </label>
             </div>
@@ -143,7 +139,6 @@
                   </option>
                 </select>
               </label>
-              <div class="form-text">Хранится в браузере, по умолчанию — время браузера.</div>
             </div>
             <div class="col-12 d-flex flex-wrap gap-3 align-items-center mt-2">
               <button class="btn btn-gradient" type="submit" :disabled="auth.state.loading">
@@ -208,10 +203,12 @@ const passwordWeak = computed(() => {
   return !(hasLength && hasNumber && hasLetter);
 });
 
+const showPasswordHint = computed(() => password.value.length > 0);
+
 const passwordHint = computed(() =>
   passwordWeak.value
-    ? 'Пароль слабый: добавьте буквы и цифры, минимум 8 символов.'
-    : 'Пароль выглядит достаточно надежным.',
+    ? '👎 Пароль должен содержать буквы и цифры, минимум 8 символов.'
+    : '👍 Надежный пароль',
 );
 
 watch(

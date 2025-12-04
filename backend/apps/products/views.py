@@ -236,7 +236,7 @@ class ProductDetailsJobsView(APIView):
         pending = (
             Product.objects.filter(details_request__status="pending", user=user)
             .select_related("details_request")
-            .order_by("-details_request__created_at")[:limit]
+            .order_by("details_request__created_at", "id")[:limit]
         )
         base_url = getattr(
             settings, "ARMTEK_HTML_BASE_URL", "https://etp.armtek.ru/artinfo/index"

@@ -4,20 +4,13 @@
       <div class="card shadow-lg">
         <div class="card-body p-4 p-md-5">
           <div class="text-center mb-4">
-            <div class="pill-group mb-2">SPA • Armtek</div>
-            <h1 class="fw-bold mb-1">Elizabeth</h1>
-            <p class="text-muted mb-0">Современная панель для поиска, проверки наличия и загрузки характеристик.</p>
-          </div>
-
-          <div class="mb-3 text-start">
-            <h5 class="card-title mb-1">Войти в систему</h5>
-            <p class="text-muted mb-0">Введите email и пароль</p>
+            <div class="pill-group mb-2">Elizabeth</div>
+            <h1 class="fw-bold mb-1">Войти</h1>
           </div>
 
           <form class="d-flex flex-column gap-3" @submit.prevent="submit">
             <div>
               <label class="form-label w-100" for="login-email">
-                Email
                 <input
                   id="login-email"
                   name="email"
@@ -26,13 +19,12 @@
                   class="form-control"
                   autocomplete="email"
                   required
-                  placeholder="you@example.com"
+                  placeholder="Email"
                 />
               </label>
             </div>
             <div>
               <label class="form-label w-100" for="login-password">
-                Пароль
                 <input
                   id="login-password"
                   name="password"
@@ -41,14 +33,14 @@
                   class="form-control"
                   autocomplete="current-password"
                   required
-                  placeholder="Введите пароль"
+                  placeholder="Пароль"
                 />
               </label>
             </div>
             <button class="btn btn-gradient w-100 d-inline-flex align-items-center justify-content-center" type="submit" :disabled="auth.state.loading">
               <span v-if="auth.state.loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
               <i v-else class="bi bi-box-arrow-in-right me-2"></i>
-              Войти в аккаунт
+              Войти
             </button>
             <AlertMessage
               v-if="auth.state.error"

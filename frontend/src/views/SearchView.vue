@@ -1,15 +1,5 @@
 <template>
   <MainLayout>
-    <div class="page-header">
-      <h1>Поиск товаров</h1>
-      <p class="text-muted">Введите артикулы и бренды, запустите поиск и нажмите «Получить характеристики», чтобы фронтенд начал отслеживать их статус.</p>
-      <div class="page-meta mt-2">
-        <span class="pill-group">API /api/v1/search/bulk</span>
-        <span class="muted-chip">Характеристики подтягиваются по мере готовности</span>
-        <span class="muted-chip">Таблица обновляется каждые 5 секунд</span>
-      </div>
-    </div>
-
     <div class="row g-3">
       <div class="col-12">
         <SearchForm
@@ -166,26 +156,37 @@ const waitForDetails = async (requestId, timeoutMs = 120000) => {
 const openArmtekQueueSequential = async () => {
   if (openingQueue) return;
   openingQueue = true;
+  const processed = new Set();
   try {
     while (true) {
-      const { data } = await ProductApi.jobs(1);
-      if (!Array.isArray(data) || data.length === 0) {
+      const { data } = await ProductApi.jobs(50);
+      const queue = Array.isArray(data)
+        ? data.filter((job) => job && !processed.has(job.request_id))
+        : [];
+
+      if (!queue.length) {
         helperMessage.value =
           'Очередь характеристик пуста — если товары ещё без характеристик, попробуйте нажать «Получить характеристики товаров» снова.';
         break;
       }
-      const job = data[0];
-      if (job.open_url) {
-        window.open(job.open_url, '_blank', 'noopener,noreferrer');
-      }
-      const result = await waitForDetails(job.request_id);
-      if (result === 'timeout') {
-        helperMessage.value = 'Таймаут ожидания расширения. Остановили очередь.';
-        break;
-      }
-      if (result === 'error') {
-        helperMessage.value = 'Ошибка при опросе статуса. Остановили очередь.';
-        break;
+
+      for (const job of queue) {
+        if (!job?.request_id) {
+          continue;
+        }
+        processed.add(job.request_id);
+        if (job.open_url) {
+          window.open(job.open_url, '_blank', 'noopener,noreferrer');
+        }
+        const result = await waitForDetails(job.request_id);
+        if (result === 'timeout') {
+          helperMessage.value = 'Таймаут ожидания расширения. Остановили очередь.';
+          return;
+        }
+        if (result === 'error') {
+          helperMessage.value = 'Ошибка при опросе статуса. Остановили очередь.';
+          return;
+        }
       }
     }
   } catch (err) {

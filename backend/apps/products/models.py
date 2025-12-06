@@ -130,6 +130,7 @@ class ProductDetails(models.Model):
     inner_diameter_mm = models.IntegerField(null=True, blank=True)
     material = models.CharField(max_length=128, null=True, blank=True)
     manufacturer_part_number = models.CharField(max_length=128, null=True, blank=True)
+    oem_number_primary = models.CharField(max_length=128, null=True, blank=True)
     weight = models.DecimalField(max_digits=10, decimal_places=3, null=True, blank=True)
     length = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     width = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

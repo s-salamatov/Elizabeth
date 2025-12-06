@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from typing import Any, Iterable, Protocol
 from uuid import uuid4
@@ -14,6 +15,8 @@ from backend.apps.products.models import (
     ProductDetails,
     ProductDetailsRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class SearchItemLike(Protocol):
@@ -50,6 +53,28 @@ def _cache_ttl() -> timedelta:
     return timedelta(minutes=minutes)
 
 
+def _build_alt_articles(
+    analogs: Iterable[SearchItemLike] | None,
+) -> list[dict[str, str]]:
+    """Return a list of analogs shaped for Product.alt_articles."""
+    if not analogs:
+        return []
+
+    result: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for analog in analogs:
+        pin = getattr(analog, "pin", None) or ""
+        brand = getattr(analog, "brand", None) or ""
+        if not pin and not brand:
+            continue
+        key = (pin, brand)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append({"pin": pin, "brand": brand})
+    return result
+
+
 def is_product_fresh(product: Product) -> bool:
     if product.fetched_at is None:
         return False
@@ -59,10 +84,12 @@ def is_product_fresh(product: Product) -> bool:
 def upsert_product_from_search(
     item: SearchItemLike,
     *,
+    analogs: Iterable[SearchItemLike] | None = None,
     source: str = "armtek",
     user: Any,
     search_request: Any,
 ) -> Product:
+    alt_articles = _build_alt_articles(analogs)
     defaults = {
         "user": user,
         "search_request": search_request,
@@ -70,8 +97,10 @@ def upsert_product_from_search(
         "pin": item.pin,
         "oem": getattr(item, "oem", "") or "",
         "name": item.name,
+        "quantity": getattr(item, "available_quantity", None),
         "price": getattr(item, "price", None),
         "currency": getattr(item, "currency", None) or None,
+        "alt_articles": alt_articles or None,
         "available_quantity": getattr(item, "available_quantity", None),
         "warehouse_partner": getattr(item, "warehouse_partner", None) or None,
         "warehouse_code": getattr(item, "warehouse_code", None) or None,
@@ -99,6 +128,19 @@ def upsert_product_from_search(
         search_request=search_request,
         defaults=defaults,
     )
+    if created:
+        logger.info(
+            "Product created from search",
+            extra={
+                "product_id": product.id,
+                "artid": product.artid,
+                "pin": product.pin,
+                "brand": product.brand,
+                "price": str(product.price) if product.price is not None else None,
+                "quantity": product.quantity,
+                "alt_articles_count": len(product.alt_articles or []),
+            },
+        )
     if not created:
         changed = False
         for field, value in defaults.items():
@@ -114,6 +156,18 @@ def upsert_product_from_search(
             changed = True
         if changed:
             product.save()
+            logger.info(
+                "Product updated from search",
+                extra={
+                    "product_id": product.id,
+                    "artid": product.artid,
+                    "pin": product.pin,
+                    "brand": product.brand,
+                    "price": str(product.price) if product.price is not None else None,
+                    "quantity": product.quantity,
+                    "alt_articles_count": len(product.alt_articles or []),
+                },
+            )
     ensure_details_request(product)
     return product
 
@@ -137,11 +191,35 @@ def upsert_products_from_search(
 
 def update_product_details(product: Product, *, data: dict[str, Any]) -> ProductDetails:
     details, _ = ProductDetails.objects.get_or_create(product=product)
-    for field in ["image_url", "weight", "length", "width", "height", "analog_code"]:
+    for field in [
+        "image_url",
+        "weight",
+        "length",
+        "width",
+        "height",
+        "analog_code",
+        "package_weight_g",
+        "package_length_mm",
+        "package_height_mm",
+        "package_width_mm",
+        "product_weight_g",
+        "oem_number",
+        "oem_number_primary",
+        "inner_diameter_mm",
+        "material",
+        "manufacturer_part_number",
+    ]:
         if field in data:
             setattr(details, field, data[field])
     details.fetched_at = timezone.now()
     details.save()
+    logger.info(
+        "ProductDetails saved",
+        extra={
+            "product_id": product.id,
+            "fields_set": list(data.keys()),
+        },
+    )
     _set_details_request_status(product, DetailsRequestStatus.READY, error=None)
     return details
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import re
 from decimal import Decimal, InvalidOperation
 from typing import Any, List, cast
@@ -59,6 +60,8 @@ class ProductDetailView(RetrieveAPIView[Product]):
 class ProductDetailsIngestView(APIView):
     permission_classes = [AllowAny]
 
+    logger = logging.getLogger(__name__)
+
     NUMERIC_FIELDS = {
         "weight": 3,
         "length": 2,
@@ -87,35 +90,198 @@ class ProductDetailsIngestView(APIView):
         except InvalidOperation:
             return None
 
+    @staticmethod
+    def _parse_weight_to_grams(value: Any) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, (list, tuple)) and value:
+            value = value[0]
+        if isinstance(value, (int, float, Decimal)):
+            # Without a unit we cannot be confident; treat as unparsable for the
+            # normalized gram fields but leave legacy decimals intact.
+            return None
+        if not isinstance(value, str):
+            return None
+        text = value.strip().lower().replace(",", ".")
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        if not match:
+            return None
+        number = float(match.group(0))
+        unit_factor = None
+        weight_tokens = (
+            ("кг", 1000),
+            ("kg", 1000),
+            ("килограмм", 1000),
+            ("килог", 1000),
+            ("г", 1),
+            ("гр", 1),
+            ("gram", 1),
+            ("грамм", 1),
+        )
+        for token, factor in weight_tokens:
+            if token in text:
+                unit_factor = factor
+                break
+        if unit_factor is None:
+            return None
+        return int(round(number * unit_factor))
+
+    @staticmethod
+    def _parse_length_to_mm(value: Any) -> int | None:
+        if value is None:
+            return None
+        if isinstance(value, (list, tuple)) and value:
+            value = value[0]
+        if isinstance(value, (int, float, Decimal)):
+            # Without a unit the number may be ambiguous; skip.
+            return None
+        if not isinstance(value, str):
+            return None
+        text = value.strip().lower().replace(",", ".")
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        if not match:
+            return None
+        number = float(match.group(0))
+        unit_factor = None
+        length_tokens = (
+            ("мм", 1),
+            ("mm", 1),
+            ("миллиметр", 1),
+            ("миллиметров", 1),
+            ("см", 10),
+            ("cm", 10),
+            ("сантиметр", 10),
+            ("сантиметров", 10),
+            ("centimeter", 10),
+            ("centimetre", 10),
+        )
+        for token, factor in length_tokens:
+            if token in text:
+                unit_factor = factor
+                break
+        if unit_factor is None:
+            return None
+        return int(round(number * unit_factor))
+
     def _normalize_payload(self, data: dict[str, Any]) -> dict[str, Any]:
         cleaned: dict[str, Any] = {}
+
+        # Flatten single-element lists coming from form-data
         for key, value in data.items():
             if isinstance(value, list) and len(value) == 1:
                 cleaned[key] = value[0]
             else:
                 cleaned[key] = value
-        # numeric fields: try to extract number, silently drop if not parseable
+
+        normalized: dict[str, Any] = {}
+
+        # Legacy numeric fields stay as decimals (backward compatibility)
         for field, places in self.NUMERIC_FIELDS.items():
             parsed = self._parse_decimal(cleaned.get(field), places)
-            if parsed is None:
-                cleaned.pop(field, None)
-            else:
-                cleaned[field] = parsed
-        # image_url: keep only valid http(s)
+            if parsed is not None:
+                normalized[field] = parsed
+
+        # Image URL sanity check
         image_url = cleaned.get("image_url")
-        if image_url:
-            if not isinstance(image_url, str) or not image_url.lower().startswith(
-                ("http://", "https://")
-            ):
-                cleaned.pop("image_url", None)
+        if (
+            image_url
+            and isinstance(image_url, str)
+            and image_url.lower().startswith(("http://", "https://"))
+        ):
+            normalized["image_url"] = image_url
+
         # analog_code: strip whitespace
-        if "analog_code" in cleaned and isinstance(cleaned.get("analog_code"), str):
-            cleaned["analog_code"] = cleaned["analog_code"].strip()
-        return cleaned
+        analog_code = cleaned.get("analog_code")
+        if isinstance(analog_code, str):
+            analog_code = analog_code.strip()
+            if analog_code:
+                normalized["analog_code"] = analog_code
+
+        # Raw weight/dimension fields from extension (parsed into grams/mm)
+        raw_to_target = {
+            "package_weight_raw": "package_weight_g",
+            "product_weight_raw": "product_weight_g",
+            "package_length_raw": "package_length_mm",
+            "package_height_raw": "package_height_mm",
+            "package_width_raw": "package_width_mm",
+        }
+
+        for raw_field, target in raw_to_target.items():
+            raw_value = cleaned.get(raw_field)
+            if raw_value is None:
+                continue
+            parser = (
+                self._parse_weight_to_grams
+                if "weight" in raw_field
+                else self._parse_length_to_mm
+            )
+            parsed_value = parser(raw_value)
+            if parsed_value is None:
+                self.logger.warning("Failed to parse %s", raw_field)
+            else:
+                normalized[target] = parsed_value
+
+        # Fallback: if only legacy numeric fields are present with units, try to
+        # populate the normalized gram/mm fields as well.
+        if "package_weight_g" not in normalized:
+            parsed_weight = self._parse_weight_to_grams(cleaned.get("weight"))
+            if parsed_weight is not None:
+                normalized["package_weight_g"] = parsed_weight
+        if "package_length_mm" not in normalized:
+            parsed_length = self._parse_length_to_mm(cleaned.get("length"))
+            if parsed_length is not None:
+                normalized["package_length_mm"] = parsed_length
+        if "package_height_mm" not in normalized:
+            parsed_height = self._parse_length_to_mm(cleaned.get("height"))
+            if parsed_height is not None:
+                normalized["package_height_mm"] = parsed_height
+        if "package_width_mm" not in normalized:
+            parsed_width = self._parse_length_to_mm(cleaned.get("width"))
+            if parsed_width is not None:
+                normalized["package_width_mm"] = parsed_width
+
+        # OEM numbers: accept array or comma-separated string
+        raw_oems = cleaned.get("oem_numbers")
+        oem_list: list[str] = []
+        if isinstance(raw_oems, str):
+            oem_list = [part.strip() for part in raw_oems.split(",") if part.strip()]
+        elif isinstance(raw_oems, (list, tuple, set)):
+            for val in raw_oems:
+                if isinstance(val, str):
+                    trimmed = val.strip()
+                    if trimmed:
+                        oem_list.append(trimmed)
+        if oem_list:
+            normalized["oem_number"] = ", ".join(oem_list)
+            normalized["oem_number_primary"] = oem_list[0]
+
+        # Pass-through optional text/int fields when provided
+        passthrough_fields = [
+            "material",
+            "manufacturer_part_number",
+            "oem_number",
+            "oem_number_primary",
+        ]
+        for field in passthrough_fields:
+            if field in cleaned and cleaned.get(field) not in (None, ""):
+                normalized[field] = cleaned[field]
+
+        # inner diameter may come as str; try simple int conversion
+        inner_diameter = cleaned.get("inner_diameter_mm")
+        if inner_diameter not in (None, ""):
+            try:
+                normalized["inner_diameter_mm"] = int(float(str(inner_diameter)))
+            except (TypeError, ValueError):
+                self.logger.warning("Failed to parse inner_diameter_mm")
+
+        return normalized
 
     def post(
         self, request: Request, pk: int, *args: object, **kwargs: object
     ) -> Response:
+        self.logger.info(
+            "Details ingest raw request", extra={"product_id": pk, "data": request.data}
+        )
         token = request.headers.get("X-Details-Token") or request.query_params.get(
             "request_id"
         )
@@ -145,6 +311,10 @@ class ProductDetailsIngestView(APIView):
                 {"detail": "Invalid request_id"}, status=status.HTTP_403_FORBIDDEN
             )
         normalized = self._normalize_payload(dict(request.data))
+        self.logger.info(
+            "Details ingest normalized payload",
+            extra={"product_id": pk, "normalized": normalized},
+        )
         serializer = ProductDetailsInputSerializer(data=normalized)
         if not serializer.is_valid():
             error_text = str(serializer.errors)

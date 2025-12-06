@@ -21,11 +21,21 @@ class ProductDetailsSerializer(serializers.ModelSerializer[ProductDetails]):
         model = ProductDetails
         fields = [
             "image_url",
+            "package_weight_g",
+            "package_length_mm",
+            "package_height_mm",
+            "package_width_mm",
+            "product_weight_g",
             "weight",
             "length",
             "width",
             "height",
             "analog_code",
+            "oem_number",
+            "oem_number_primary",
+            "inner_diameter_mm",
+            "material",
+            "manufacturer_part_number",
             "fetched_at",
         ]
 
@@ -47,6 +57,22 @@ class ProductDetailsInputSerializer(serializers.Serializer[dict[str, Any]]):
         max_digits=10, decimal_places=2, required=False, allow_null=True
     )
     analog_code = serializers.CharField(required=False, allow_blank=True)
+    package_weight_g = serializers.IntegerField(required=False, allow_null=True)
+    package_length_mm = serializers.IntegerField(required=False, allow_null=True)
+    package_height_mm = serializers.IntegerField(required=False, allow_null=True)
+    package_width_mm = serializers.IntegerField(required=False, allow_null=True)
+    product_weight_g = serializers.IntegerField(required=False, allow_null=True)
+    oem_number = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    oem_number_primary = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
+    inner_diameter_mm = serializers.IntegerField(required=False, allow_null=True)
+    material = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    manufacturer_part_number = serializers.CharField(
+        required=False, allow_blank=True, allow_null=True
+    )
 
 
 class ProductSerializer(serializers.ModelSerializer[Product]):
@@ -70,8 +96,10 @@ class ProductSerializer(serializers.ModelSerializer[Product]):
             "pin",
             "oem",
             "name",
+            "quantity",
             "price",
             "currency",
+            "alt_articles",
             "available_quantity",
             "warehouse_partner",
             "warehouse_code",

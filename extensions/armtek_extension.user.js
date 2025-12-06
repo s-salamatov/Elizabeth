@@ -64,13 +64,6 @@
 
   const normalizeLabel = (text) => (text || '').replace(/\s+/g, ' ').replace(/:/g, '').trim().toLowerCase();
 
-  const parseNumber = (text) => {
-    if (!text) return null;
-    const normalized = String(text).replace(',', '.');
-    const match = normalized.match(/-?\d+(?:\.\d+)?/);
-    return match ? parseFloat(match[0]) : null;
-  };
-
   const findPropValue = (doc, targets) => {
     const container = getPropsContainer(doc);
     if (!container) return null;
@@ -98,12 +91,51 @@
     const widthRaw = findPropValue(doc, ['ширина']);
     const analogRaw = findPropValue(doc, ['код аналога']);
     return {
-      weight: parseNumber(weightRaw),
-      length: parseNumber(lengthRaw),
-      height: parseNumber(heightRaw),
-      width: parseNumber(widthRaw),
+      package_weight_raw: weightRaw,
+      package_length_raw: lengthRaw,
+      package_height_raw: heightRaw,
+      package_width_raw: widthRaw,
       analog_code: analogRaw ? analogRaw.trim() : null,
     };
+  };
+
+  const scanOemNumbers = (doc) => {
+    const selectors = [
+      '#oems-tab-content .oemnumber-container a',
+      '#oems-tab-content .all-oemsnumber-container .brands-list .oemsnumber-brand-container a',
+      '#oems-tab-content a',
+    ];
+    const seen = new Set();
+    selectors.forEach((sel) => {
+      doc.querySelectorAll(sel).forEach((a) => {
+        const text = (a.textContent || '').trim();
+        if (text) seen.add(text);
+      });
+    });
+    return Array.from(seen);
+  };
+
+  const waitForOems = async (maxWaitMs = 8000, interval = 400) => {
+    // 1) попробуем прочитать, даже если вкладка не активна
+    let numbers = scanOemNumbers(document);
+    if (numbers.length) return numbers;
+
+    // 2) если пусто — активируем вкладку и ждём появления DOM
+    const oemTabToggle =
+      document.querySelector('a[href="#oems-tab-content"]') ||
+      document.querySelector('[data-bs-target="#oems-tab-content"]') ||
+      document.querySelector('[data-target="#oems-tab-content"]');
+    if (oemTabToggle) {
+      oemTabToggle.click();
+    }
+
+    const start = Date.now();
+    while (Date.now() - start < maxWaitMs) {
+      numbers = scanOemNumbers(document);
+      if (numbers.length) return numbers;
+      await sleep(interval);
+    }
+    return [];
   };
 
   const waitForProductPage = async () => {
@@ -118,15 +150,16 @@
     return 'timeout';
   };
 
-  const sendCharacteristicsToBackend = async (imageUrl, extra) => {
+  const sendCharacteristicsToBackend = async (imageUrl, extra, oemNumbers) => {
     const artid = extractArtidFromPath(window.location.pathname);
     const payload = {};
     if (imageUrl) payload.image_url = imageUrl;
-    if (extra.weight !== null) payload.weight = extra.weight;
-    if (extra.length !== null) payload.length = extra.length;
-    if (extra.height !== null) payload.height = extra.height;
-    if (extra.width !== null) payload.width = extra.width;
+    if (extra.package_weight_raw) payload.package_weight_raw = extra.package_weight_raw;
+    if (extra.package_length_raw) payload.package_length_raw = extra.package_length_raw;
+    if (extra.package_height_raw) payload.package_height_raw = extra.package_height_raw;
+    if (extra.package_width_raw) payload.package_width_raw = extra.package_width_raw;
     if (extra.analog_code) payload.analog_code = extra.analog_code;
+    if (oemNumbers && oemNumbers.length) payload.oem_numbers = oemNumbers;
 
     const resp = await fetch(INGEST_ENDPOINT(productId, requestId), {
       method: 'POST',
@@ -151,8 +184,9 @@
 
     const imageUrl = extractImageUrlFromDom(document);
     const extra = extractAdditionalCharacteristics(document);
+    const oemNumbers = await waitForOems();
     try {
-      await sendCharacteristicsToBackend(imageUrl, extra);
+      await sendCharacteristicsToBackend(imageUrl, extra, oemNumbers);
       log('Sent details for product', productId, requestId);
     } catch (err) {
       logError('Send failed', err);

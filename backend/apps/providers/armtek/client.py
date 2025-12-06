@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Mapping, Optional
+import logging
+from typing import Any, Dict, Iterable, Mapping, Optional, Sized
 
 import httpx
 
@@ -10,6 +11,8 @@ from backend.apps.providers.armtek.exceptions import (
     ArmtekResponseError,
 )
 from backend.apps.providers.armtek.types import ArmtekSearchItem
+
+logger = logging.getLogger(__name__)
 
 
 class ArmtekClient:
@@ -77,6 +80,15 @@ class ArmtekClient:
         raw = self._post("/api/ws_search/search", data=payload)
         resp = unwrap_resp(raw)
         array = resp.get("ARRAY", [])
+        items_count = len(array) if isinstance(array, Sized) else None
+        logger.info(
+            "Armtek search RESP received",
+            extra={
+                "pin": pin,
+                "brand": brand,
+                "items_count": items_count,
+            },
+        )
         items: list[ArmtekSearchItem] = []
         if not isinstance(array, Iterable):
             raise ArmtekResponseError("RESP.ARRAY must be iterable")
@@ -89,11 +101,7 @@ class ArmtekClient:
                     brand=str(entry.get("BRAND", brand or "")),
                     name=str(entry.get("NAME", "")),
                     artid=str(entry.get("ARTID", "")),
-                    is_analog=(
-                        bool(_coerce_int(entry.get("ANALOG")))
-                        if entry.get("ANALOG") is not None
-                        else None
-                    ),
+                    is_analog=_coerce_analog(entry.get("ANALOG")),
                     price=_coerce_float(entry.get("PRICE")),
                     currency=_clean_str(entry.get("WAERS")),
                     warehouse_partner=_clean_str(entry.get("PARNR")),
@@ -190,3 +198,22 @@ def _clean_str(value: Any) -> Optional[str]:
         return None
     value_str = str(value).strip()
     return value_str or None
+
+
+def _coerce_analog(value: Any) -> Optional[bool]:
+    """Armtek ANALOG flag comes as 0/1 or sometimes 'X'."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, str):
+        stripped = value.strip().upper()
+        if stripped == "X":
+            return True
+        if stripped.isdigit():
+            try:
+                return bool(int(stripped))
+            except ValueError:
+                return None
+    coerced_int = _coerce_int(value)
+    if coerced_int is None:
+        return None
+    return bool(coerced_int)

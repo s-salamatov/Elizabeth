@@ -56,14 +56,14 @@ class ArmtekSearchService:
                 kunnr_rg=self.credentials.kunnr_rg,
                 pin=pin,
                 brand=brand,
-                query_type=1,  # Only direct matches (exclude analogs) per Armtek API
+                # Allow analogs in the response so we can populate alt_articles
+                query_type=None,
                 program=self.program,
                 kunnr_za=self.credentials.kunnr_za,
                 incoterms=self.credentials.incoterms,
                 vbeln=self.credentials.vbeln,
             )
-        main = self._pick_first_non_analog(items)
-        return [main] if main else []
+        return items
 
     def _build_stub_item(self, *, pin: str, brand: str | None) -> ArmtekSearchItem:
         label = brand or "STUB"

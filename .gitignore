@@ -20,6 +20,7 @@ venv/
 # Environment files
 .env
 db.sqlite3
+agent-instructions/
 
 # Node / frontend
 node_modules/

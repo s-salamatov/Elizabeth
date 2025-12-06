@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import logging
 from typing import Any, Iterable, List, Tuple
 
 from django.db import transaction
 
 from backend.apps.products.models import Product
-from backend.apps.products.services import upsert_products_from_search
+from backend.apps.products.services import upsert_product_from_search
 from backend.apps.providers.armtek.services import ArmtekSearchService
 from backend.apps.providers.services import resolve_armtek_credentials
 from backend.apps.search.models import SearchRequest, SearchStatus
 from backend.apps.search.parsers import split_pin_and_brand
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -85,9 +88,36 @@ def _run_search_flow(
     for query in queries:
         pin, brand = split_pin_and_brand(query)
         items = service.search(pin=pin, brand=brand)
-        products.extend(
-            upsert_products_from_search(
-                items,
+        logger.info(
+            "Armtek search items fetched",
+            extra={
+                "query": query,
+                "pin": pin,
+                "brand": brand,
+                "items_count": len(items),
+            },
+        )
+        if not items:
+            continue
+        main = ArmtekSearchService._pick_first_non_analog(items)
+        if main is None and items:
+            main = items[0]
+        if main is None:
+            continue
+        analogs = [item for item in items if item.is_analog is True and item != main]
+        logger.info(
+            "Persisting main product from search",
+            extra={
+                "artid": main.artid,
+                "pin": main.pin,
+                "brand": main.brand,
+                "analogs_count": len(analogs),
+            },
+        )
+        products.append(
+            upsert_product_from_search(
+                main,
+                analogs=analogs,
                 source=source,
                 user=user,
                 search_request=search_request,
